@@ -98,7 +98,7 @@ export const productService = {
         );
       }
 
-      return productRepository.findById(product.id);
+      return productRepository.findById(product.id, { transaction });
     });
   },
 
@@ -148,7 +148,7 @@ export const productService = {
         );
       }
 
-      return productRepository.findById(id);
+      return productRepository.findById(id, { transaction });
     });
   },
 
