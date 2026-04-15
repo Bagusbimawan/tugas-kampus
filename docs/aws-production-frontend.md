@@ -28,7 +28,7 @@ cp frontend/.env.production.example frontend/.env.local
 Isi production:
 
 ```env
-NEXT_PUBLIC_API_URL=https://api.example.com/api
+NEXT_PUBLIC_API_URL=https://kasir.bagusbimawan.com/api
 ```
 
 Template ada di [frontend/.env.production.example](../frontend/.env.production.example).

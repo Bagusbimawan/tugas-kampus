@@ -26,7 +26,7 @@ const productSchema = z.object({
   name: z.string().min(1, 'Nama produk wajib diisi'),
   categoryId: z.coerce.number().min(1, 'Kategori wajib dipilih'),
   sku: z.string().optional(),
-  price: z.coerce.number().min(0, 'Harga jual tidak boleh negatif'),
+  price: z.coerce.number().positive('Harga jual harus lebih besar dari 0'),
   costPrice: z.union([z.coerce.number().min(0), z.nan()]).optional(),
   stock: z.coerce.number().int().min(0, 'Stok tidak boleh negatif'),
   minStock: z.coerce.number().int().min(0, 'Stok minimum tidak boleh negatif'),
@@ -223,8 +223,8 @@ const ProductFormModal = ({
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end bg-slate-950/70 p-0 backdrop-blur sm:items-center sm:justify-center sm:p-6">
-      <div className="w-full rounded-t-[28px] border border-slate-200 bg-white sm:max-w-3xl sm:rounded-[28px]">
+    <div className="fixed inset-0 z-50 flex items-end overflow-y-auto bg-slate-950/70 p-0 backdrop-blur sm:items-center sm:justify-center sm:p-6">
+      <div className="flex max-h-[100dvh] w-full flex-col rounded-t-[28px] border border-slate-200 bg-white sm:max-h-[min(90dvh,56rem)] sm:max-w-3xl sm:rounded-[28px]">
         <div className="flex items-center justify-between border-b border-slate-200 px-5 py-4 sm:px-6">
           <div>
             <p className="text-xs uppercase tracking-[0.35em] text-amber-600">
@@ -245,7 +245,7 @@ const ProductFormModal = ({
 
         <form
           onSubmit={handleSubmit(async (values) => onSubmit(values, imageFile))}
-          className="grid gap-4 p-5 sm:grid-cols-2 sm:p-6"
+          className="grid flex-1 gap-4 overflow-y-auto p-5 sm:grid-cols-2 sm:p-6"
         >
           <label className="block text-sm text-slate-600">
             Nama Produk*
@@ -400,7 +400,7 @@ const ProductFormModal = ({
             <input type="checkbox" {...register('isActive')} className="h-5 w-5" />
           </label>
 
-          <div className="flex gap-3 sm:col-span-2">
+          <div className="sticky bottom-0 flex gap-3 border-t border-slate-200 bg-white pt-4 sm:col-span-2">
             <button
               type="button"
               onClick={onClose}
