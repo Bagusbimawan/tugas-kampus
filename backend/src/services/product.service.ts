@@ -1,3 +1,5 @@
+import { Transaction } from 'sequelize';
+
 import { categoryRepository } from '../repositories/category.repository';
 import { productRepository } from '../repositories/product.repository';
 import { stockRepository } from '../repositories/stock.repository';
@@ -74,7 +76,7 @@ export const productService = {
     await ensureCategoryExists(payload.categoryId);
     const sku = await ensureUniqueSku(payload.sku);
 
-    return stockRepository.sequelize.transaction(async (transaction: unknown) => {
+    return stockRepository.sequelize.transaction(async (transaction: Transaction) => {
       const product = await productRepository.create(
         {
           ...payload,
@@ -112,7 +114,7 @@ export const productService = {
     await ensureCategoryExists(payload.categoryId);
     const sku = await ensureUniqueSku(payload.sku, id);
 
-    return stockRepository.sequelize.transaction(async (transaction: unknown) => {
+    return stockRepository.sequelize.transaction(async (transaction: Transaction) => {
       const currentProduct = await stockRepository.findProductById(id, transaction);
 
       if (!currentProduct) {
