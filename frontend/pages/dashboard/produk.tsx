@@ -352,8 +352,8 @@ const ProductFormModal = ({
           <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4 sm:col-span-2">
             <p className="text-sm font-medium text-slate-900">Gambar Produk</p>
             <p className="mt-1 text-sm text-slate-500">
-              Upload file gambar. Setelah disimpan, URL dari Lightsail bucket akan muncul di data
-              produk.
+              Upload file gambar. Sistem akan menyimpan URL gambar di database dan memakainya
+              otomatis untuk menampilkan preview produk.
             </p>
             <input
               type="file"
@@ -371,19 +371,9 @@ const ProductFormModal = ({
                   />
                   <div className="min-w-0 flex-1">
                     <p className="text-sm font-medium text-slate-900">Preview gambar</p>
-                    <p className="mt-1 break-all text-xs text-slate-500">
-                      {imageFile ? imageFile.name : initialProduct?.imageUrl || '-'}
+                    <p className="mt-1 text-xs text-slate-500">
+                      {imageFile ? imageFile.name : 'Gambar produk saat ini'}
                     </p>
-                    {initialProduct?.imageUrl ? (
-                      <a
-                        href={initialProduct.imageUrl}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="mt-2 inline-flex text-xs font-semibold text-amber-600"
-                      >
-                        Buka URL gambar saat ini
-                      </a>
-                    ) : null}
                   </div>
                 </div>
               </div>
@@ -776,20 +766,12 @@ export default function DashboardProdukPage() {
                             </td>
                             <td className="px-4 py-4">
                               {product.imageUrl ? (
-                                <div className="flex min-w-[220px] items-center gap-3">
+                                <div className="flex items-center">
                                   <img
                                     src={product.imageUrl}
                                     alt={product.name}
                                     className="h-12 w-12 rounded-2xl object-cover"
                                   />
-                                  <a
-                                    href={product.imageUrl}
-                                    target="_blank"
-                                    rel="noreferrer"
-                                    className="line-clamp-2 break-all text-xs font-medium text-amber-600"
-                                  >
-                                    {product.imageUrl}
-                                  </a>
                                 </div>
                               ) : (
                                 <span className="text-slate-400">Belum ada</span>
