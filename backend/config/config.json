@@ -1,0 +1,25 @@
+{
+  "development": {
+    "username": "kasir_user",
+    "password": "CHANGE_ME",
+    "database": "kasir_db",
+    "host": "mysql",
+    "port": 3306,
+    "dialect": "mysql",
+    "define": {
+      "underscored": true
+    }
+  },
+  "production": {
+    "username": "kasir_user",
+    "password": "CHANGE_ME",
+    "database": "kasir_db",
+    "host": "127.0.0.1",
+    "port": 3306,
+    "dialect": "mysql",
+    "define": {
+      "underscored": true
+    }
+  }
+}
+

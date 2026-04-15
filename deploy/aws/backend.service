@@ -1,0 +1,15 @@
+[Unit]
+Description=Kasir Backend API
+After=network.target
+
+[Service]
+Type=simple
+User=ubuntu
+WorkingDirectory=/opt/kasir/backend
+EnvironmentFile=/opt/kasir/backend/.env.production
+ExecStart=/usr/bin/npm run start
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target
