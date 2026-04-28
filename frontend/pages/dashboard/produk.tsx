@@ -224,8 +224,8 @@ const ProductFormModal = ({
 
   return (
     <div className="fixed inset-0 z-50 flex items-end overflow-y-auto bg-slate-950/70 p-0 backdrop-blur sm:items-center sm:justify-center sm:p-6">
-      <div className="flex max-h-[100dvh] w-full flex-col rounded-t-[28px] border border-slate-200 bg-white sm:max-h-[min(90dvh,56rem)] sm:max-w-3xl sm:rounded-[28px]">
-        <div className="flex items-center justify-between border-b border-slate-200 px-5 py-4 sm:px-6">
+      <div className="flex max-h-[100dvh] w-full flex-col overflow-hidden rounded-t-[28px] border border-slate-200 bg-white sm:max-h-[min(90dvh,56rem)] sm:max-w-3xl sm:rounded-[28px]">
+        <div className="flex items-start justify-between gap-4 border-b border-slate-200 px-4 py-4 sm:px-6">
           <div>
             <p className="text-xs uppercase tracking-[0.35em] text-amber-600">
               {initialProduct ? 'Edit Produk' : 'Tambah Produk'}
@@ -245,7 +245,7 @@ const ProductFormModal = ({
 
         <form
           onSubmit={handleSubmit(async (values) => onSubmit(values, imageFile))}
-          className="grid flex-1 gap-4 overflow-y-auto p-5 sm:grid-cols-2 sm:p-6"
+          className="grid flex-1 gap-4 overflow-y-auto p-4 pb-[calc(env(safe-area-inset-bottom)+1rem)] sm:grid-cols-2 sm:p-6"
         >
           <label className="block text-sm text-slate-600">
             Nama Produk*
@@ -380,7 +380,7 @@ const ProductFormModal = ({
             ) : null}
           </div>
 
-          <label className="flex items-center justify-between rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4 sm:col-span-2">
+          <label className="flex flex-col gap-3 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4 sm:col-span-2 sm:flex-row sm:items-center sm:justify-between">
             <div>
               <p className="text-sm font-medium text-slate-900">Status aktif</p>
               <p className="mt-1 text-sm text-slate-500">
@@ -390,7 +390,7 @@ const ProductFormModal = ({
             <input type="checkbox" {...register('isActive')} className="h-5 w-5" />
           </label>
 
-          <div className="sticky bottom-0 flex gap-3 border-t border-slate-200 bg-white pt-4 sm:col-span-2">
+          <div className="sticky bottom-0 -mx-4 flex flex-col gap-3 border-t border-slate-200 bg-white px-4 pt-4 sm:static sm:mx-0 sm:col-span-2 sm:flex-row sm:px-0">
             <button
               type="button"
               onClick={onClose}
@@ -687,7 +687,7 @@ export default function DashboardProdukPage() {
                     setSelectedProduct(null);
                     setIsProductModalOpen(true);
                   }}
-                  className="inline-flex items-center justify-center gap-2 rounded-2xl bg-slate-950 px-5 py-3 text-sm font-semibold text-white"
+                  className="inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-slate-950 px-5 py-3 text-sm font-semibold text-white sm:w-auto"
                 >
                   <Plus className="h-4 w-4" />
                   Tambah Produk
