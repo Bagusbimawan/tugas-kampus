@@ -198,7 +198,7 @@ export default function DashboardPage() {
                 </p>
               </div>
 
-              <div className="grid gap-3 sm:grid-cols-[1fr_1fr_auto]">
+              <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-[1fr_1fr_auto]">
                 <label className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-600">
                   <span className="mb-2 flex items-center gap-2 text-xs uppercase tracking-[0.25em] text-slate-400">
                     <CalendarRange className="h-4 w-4" />
@@ -230,7 +230,7 @@ export default function DashboardPage() {
                 <button
                   type="button"
                   onClick={() => setRange({ ...draftRange })}
-                  className="rounded-2xl bg-slate-950 px-5 py-3 text-sm font-semibold text-white"
+                  className="rounded-2xl bg-slate-950 px-5 py-3 text-sm font-semibold text-white sm:col-span-2 lg:col-span-1"
                 >
                   Apply
                 </button>
@@ -343,7 +343,8 @@ export default function DashboardPage() {
               </div>
 
               <div className="overflow-hidden rounded-[24px] border border-slate-200">
-                <table className="min-w-full divide-y divide-slate-200 text-sm">
+                <div className="overflow-x-auto">
+                  <table className="min-w-[36rem] divide-y divide-slate-200 text-sm">
                   <thead className="bg-slate-50 text-left text-slate-500">
                     <tr>
                       <th className="px-4 py-4">#</th>
@@ -374,7 +375,8 @@ export default function DashboardPage() {
                           </tr>
                         ))}
                   </tbody>
-                </table>
+                  </table>
+                </div>
               </div>
             </div>
 
@@ -397,7 +399,8 @@ export default function DashboardPage() {
               </div>
 
               <div className="overflow-hidden rounded-[24px] border border-slate-200">
-                <table className="min-w-full divide-y divide-slate-200 text-sm">
+                <div className="overflow-x-auto">
+                  <table className="min-w-[40rem] divide-y divide-slate-200 text-sm">
                   <thead className="bg-slate-50 text-left text-slate-500">
                     <tr>
                       <th className="px-4 py-4">Nama Produk</th>
@@ -438,7 +441,8 @@ export default function DashboardPage() {
                           </tr>
                         ))}
                   </tbody>
-                </table>
+                  </table>
+                </div>
               </div>
             </div>
           </section>

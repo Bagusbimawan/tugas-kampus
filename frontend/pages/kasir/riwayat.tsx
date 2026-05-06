@@ -141,7 +141,7 @@ export default function KasirRiwayatPage() {
 
             <div className="mt-6 overflow-hidden rounded-[24px] border border-white/10">
               <div className="overflow-x-auto">
-                <table className="min-w-full divide-y divide-white/10 text-sm">
+                <table className="min-w-[44rem] divide-y divide-white/10 text-sm">
                   <thead className="bg-slate-950/40 text-left text-slate-400">
                     <tr>
                       <th className="px-4 py-4">No. Invoice</th>

@@ -70,7 +70,7 @@ export const DashboardLayout = ({ children }: DashboardLayoutProps) => {
       <div className="flex min-h-screen">
         <aside
           className={cn(
-            'fixed inset-y-0 left-0 z-40 w-80 border-r border-slate-200 bg-white/90 p-6 shadow-2xl shadow-slate-200/50 backdrop-blur transition-transform lg:translate-x-0',
+            'fixed inset-y-0 left-0 z-40 w-[min(20rem,calc(100vw-1rem))] overflow-y-auto border-r border-slate-200 bg-white/90 p-4 shadow-2xl shadow-slate-200/50 backdrop-blur transition-transform sm:p-6 lg:translate-x-0',
             isOpen ? 'translate-x-0' : '-translate-x-full'
           )}
         >
@@ -118,10 +118,19 @@ export const DashboardLayout = ({ children }: DashboardLayoutProps) => {
           </div>
         </aside>
 
+        {isOpen ? (
+          <button
+            type="button"
+            aria-label="Tutup menu"
+            className="fixed inset-0 z-30 bg-slate-950/40 backdrop-blur-sm lg:hidden"
+            onClick={() => setIsOpen(false)}
+          />
+        ) : null}
+
         <div className="flex min-h-screen flex-1 flex-col lg:pl-80">
           <header className="sticky top-0 z-30 border-b border-slate-200/80 bg-white/80 backdrop-blur">
-            <div className="flex items-center justify-between gap-4 px-4 py-4 sm:px-6">
-              <div className="flex items-center gap-3">
+            <div className="flex flex-col gap-4 px-4 py-4 sm:px-6 lg:flex-row lg:items-center lg:justify-between">
+              <div className="flex items-start gap-3 sm:items-center">
                 <button
                   type="button"
                   className="rounded-xl border border-slate-200 bg-white p-2 lg:hidden"
@@ -129,16 +138,18 @@ export const DashboardLayout = ({ children }: DashboardLayoutProps) => {
                 >
                   <Menu className="h-5 w-5" />
                 </button>
-                <div>
+                <div className="min-w-0">
                   <p className="text-xs uppercase tracking-[0.3em] text-amber-600">
                     Panel Manajemen
                   </p>
-                  <h2 className="text-lg font-semibold text-slate-900">Operasional Toko</h2>
+                  <h2 className="text-base font-semibold text-slate-900 sm:text-lg">
+                    Operasional Toko
+                  </h2>
                 </div>
               </div>
 
-              <div className="flex items-center gap-3">
-                <div className="rounded-2xl border border-slate-200 bg-white px-4 py-2 text-right">
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between lg:justify-end">
+                <div className="rounded-2xl border border-slate-200 bg-white px-4 py-2 text-left sm:text-right">
                   <p className="text-sm font-medium text-slate-900">{user?.name}</p>
                   <p className="text-xs uppercase tracking-[0.25em] text-slate-500">
                     {getRoleLabel(user?.role)}
@@ -147,7 +158,7 @@ export const DashboardLayout = ({ children }: DashboardLayoutProps) => {
                 <button
                   type="button"
                   onClick={handleLogout}
-                  className="inline-flex items-center gap-2 rounded-2xl bg-slate-950 px-4 py-2 text-sm font-medium text-white transition hover:bg-slate-800"
+                  className="inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-slate-950 px-4 py-2 text-sm font-medium text-white transition hover:bg-slate-800 sm:w-auto"
                 >
                   <LogOut className="h-4 w-4" />
                   Keluar
@@ -156,7 +167,9 @@ export const DashboardLayout = ({ children }: DashboardLayoutProps) => {
             </div>
           </header>
 
-          <main className="flex-1 px-4 py-6 sm:px-6">{children}</main>
+          <main className="flex-1 px-4 py-6 pb-[calc(env(safe-area-inset-bottom)+1.5rem)] sm:px-6">
+            {children}
+          </main>
         </div>
       </div>
     </div>

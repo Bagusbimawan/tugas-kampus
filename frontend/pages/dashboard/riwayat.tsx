@@ -142,7 +142,7 @@ export default function DashboardRiwayatPage() {
                 </p>
               </div>
 
-              <div className="grid gap-3 lg:grid-cols-3">
+              <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
                 <input
                   type="date"
                   value={draftRange.startDate}
@@ -162,7 +162,7 @@ export default function DashboardRiwayatPage() {
                 <button
                   type="button"
                   onClick={() => setRange({ ...draftRange })}
-                  className="rounded-2xl bg-slate-950 px-4 py-3 text-sm font-semibold text-white"
+                  className="rounded-2xl bg-slate-950 px-4 py-3 text-sm font-semibold text-white sm:col-span-2 lg:col-span-1"
                 >
                   Apply
                 </button>
@@ -181,7 +181,7 @@ export default function DashboardRiwayatPage() {
 
             <div className="mt-6 overflow-hidden rounded-[24px] border border-slate-200">
               <div className="overflow-x-auto">
-                <table className="min-w-full divide-y divide-slate-200 text-sm">
+                <table className="min-w-[52rem] divide-y divide-slate-200 text-sm">
                   <thead className="bg-slate-50 text-left text-slate-500">
                     <tr>
                       <th className="px-4 py-4">No. Invoice</th>
@@ -251,12 +251,12 @@ export default function DashboardRiwayatPage() {
               </div>
             ) : null}
 
-            <div className="mt-5 flex items-center justify-between">
+            <div className="mt-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
               <p className="text-sm text-slate-500">
                 Menampilkan halaman {transactionsQuery.data?.page || 1} dari{' '}
                 {transactionsQuery.data?.totalPages || 1}
               </p>
-              <div className="flex gap-3">
+              <div className="flex w-full gap-3 sm:w-auto">
                 <button
                   type="button"
                   disabled={page <= 1}

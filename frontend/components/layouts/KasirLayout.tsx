@@ -35,7 +35,7 @@ export const KasirLayout = ({ children }: KasirLayoutProps) => {
       <div className="flex min-h-screen">
         <aside
           className={cn(
-            'fixed inset-y-0 left-0 z-40 w-72 border-r border-white/10 bg-slate-950/90 p-6 backdrop-blur transition-transform lg:translate-x-0',
+            'fixed inset-y-0 left-0 z-40 w-[min(18rem,calc(100vw-1rem))] overflow-y-auto border-r border-white/10 bg-slate-950/90 p-4 backdrop-blur transition-transform sm:p-6 lg:translate-x-0',
             isOpen ? 'translate-x-0' : '-translate-x-full'
           )}
         >
@@ -74,10 +74,19 @@ export const KasirLayout = ({ children }: KasirLayoutProps) => {
           </nav>
         </aside>
 
+        {isOpen ? (
+          <button
+            type="button"
+            aria-label="Tutup menu"
+            className="fixed inset-0 z-30 bg-slate-950/50 backdrop-blur-sm lg:hidden"
+            onClick={() => setIsOpen(false)}
+          />
+        ) : null}
+
         <div className="flex min-h-screen flex-1 flex-col lg:pl-72">
           <header className="sticky top-0 z-30 border-b border-white/10 bg-slate-950/70 backdrop-blur">
-            <div className="flex items-center justify-between gap-4 px-4 py-4 sm:px-6">
-              <div className="flex items-center gap-3">
+            <div className="flex flex-col gap-4 px-4 py-4 sm:px-6 lg:flex-row lg:items-center lg:justify-between">
+              <div className="flex items-start gap-3 sm:items-center">
                 <button
                   type="button"
                   className="rounded-xl border border-white/10 bg-white/5 p-2 lg:hidden"
@@ -85,7 +94,7 @@ export const KasirLayout = ({ children }: KasirLayoutProps) => {
                 >
                   <Menu className="h-5 w-5" />
                 </button>
-                <div>
+                <div className="min-w-0">
                   <p className="text-xs uppercase tracking-[0.3em] text-amber-300">
                     {pageTitle}
                   </p>
@@ -93,7 +102,7 @@ export const KasirLayout = ({ children }: KasirLayoutProps) => {
                 </div>
               </div>
 
-              <div className="flex items-center gap-3">
+              <div className="flex w-full items-center justify-between gap-3 sm:w-auto sm:justify-end">
                 <div className="hidden rounded-2xl border border-white/10 bg-white/5 px-4 py-2 text-right sm:block">
                   <p className="text-sm font-medium">{user?.name}</p>
                   <p className="text-xs uppercase tracking-[0.25em] text-slate-400">
@@ -103,18 +112,18 @@ export const KasirLayout = ({ children }: KasirLayoutProps) => {
                 <button
                   type="button"
                   onClick={handleLogout}
-                  className="inline-flex items-center gap-2 rounded-2xl bg-rose-500 px-4 py-2 text-sm font-medium text-white transition hover:bg-rose-400"
+                  className="inline-flex items-center justify-center gap-2 rounded-2xl bg-rose-500 px-3 py-2 text-sm font-medium text-white transition hover:bg-rose-400 sm:px-4"
                 >
                   <LogOut className="h-4 w-4" />
-                  Keluar
+                  <span className="hidden sm:inline">Keluar</span>
                 </button>
               </div>
             </div>
           </header>
 
-          <main className="flex-1 px-4 pb-28 pt-6 sm:px-6">{children}</main>
+          <main className="flex-1 px-4 pb-28 pt-6 sm:px-6 lg:pb-6">{children}</main>
 
-          <nav className="fixed inset-x-0 bottom-0 z-30 grid grid-cols-2 border-t border-white/10 bg-slate-950/95 px-3 py-3 backdrop-blur lg:hidden">
+          <nav className="fixed inset-x-0 bottom-0 z-30 grid grid-cols-2 border-t border-white/10 bg-slate-950/95 px-3 pb-[calc(env(safe-area-inset-bottom)+0.75rem)] pt-3 backdrop-blur lg:hidden">
             {kasirLinks.map((item) => {
               const Icon = item.icon;
               const isActive = router.pathname === item.href;

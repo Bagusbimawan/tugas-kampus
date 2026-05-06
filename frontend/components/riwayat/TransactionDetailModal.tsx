@@ -21,7 +21,7 @@ export const TransactionDetailModal = ({
   const totalItems = transaction.items.reduce((sum, item) => sum + item.quantity, 0);
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end bg-slate-950/70 p-0 backdrop-blur sm:items-center sm:justify-center sm:p-6 print:static print:bg-transparent">
+    <div className="fixed inset-0 z-50 flex items-end overflow-y-auto bg-slate-950/70 p-0 backdrop-blur sm:items-center sm:justify-center sm:p-6 print:static print:bg-transparent">
       <div className="w-full rounded-t-[28px] border border-white/10 bg-white text-slate-900 sm:max-w-4xl sm:rounded-[28px] print:max-w-none print:border-0">
         <div className="flex items-center justify-between border-b border-slate-200 px-5 py-4 print:hidden sm:px-6">
           <div>
@@ -37,7 +37,7 @@ export const TransactionDetailModal = ({
           </button>
         </div>
 
-        <div className="p-5 sm:p-6 print:p-0">
+        <div className="p-5 pb-[calc(env(safe-area-inset-bottom)+1rem)] sm:p-6 print:p-0">
           <div className="rounded-[28px] border border-dashed border-slate-300 bg-slate-50 p-5 print:border-0 print:bg-white print:p-0">
             <div className="flex flex-col gap-4 border-b border-slate-200 pb-5 sm:flex-row sm:items-start sm:justify-between">
               <div>
@@ -67,7 +67,8 @@ export const TransactionDetailModal = ({
             </div>
 
             <div className="mt-6 overflow-hidden rounded-2xl border border-slate-200">
-              <table className="min-w-full divide-y divide-slate-200 text-sm">
+              <div className="overflow-x-auto">
+                <table className="min-w-[36rem] divide-y divide-slate-200 text-sm">
                 <thead className="bg-slate-100 text-left text-slate-500">
                   <tr>
                     <th className="px-4 py-3">Produk</th>
@@ -91,7 +92,8 @@ export const TransactionDetailModal = ({
                     </tr>
                   ))}
                 </tbody>
-              </table>
+                </table>
+              </div>
             </div>
 
             <div className="mt-6 grid gap-6 lg:grid-cols-[1.2fr_0.8fr]">
@@ -160,4 +162,3 @@ export const TransactionDetailModal = ({
     </div>
   );
 };
-

@@ -98,7 +98,7 @@ export const CheckoutModal = ({
         </div>
 
         <div className="grid flex-1 gap-0 overflow-hidden lg:grid-cols-[1.1fr_0.9fr]">
-          <div className="border-b border-white/10 p-4 sm:p-6 lg:border-b-0 lg:border-r">
+          <div className="border-b border-white/10 p-4 pb-5 sm:p-6 lg:border-b-0 lg:border-r">
             <div className="mb-4 flex flex-wrap items-center justify-between gap-2 text-sm text-slate-300">
               <span>Ringkasan item</span>
               <span>{modalTotalItems} item</span>
@@ -212,7 +212,7 @@ export const CheckoutModal = ({
                 </div>
               </div>
 
-              <div className="sticky bottom-0 -mx-4 border-t border-white/10 bg-slate-950/95 px-4 pt-4 backdrop-blur sm:static sm:mx-0 sm:border-t-0 sm:bg-transparent sm:px-0 sm:pt-0">
+              <div className="sticky bottom-0 -mx-4 border-t border-white/10 bg-slate-950/95 px-4 pb-[calc(env(safe-area-inset-bottom)+0.25rem)] pt-4 backdrop-blur sm:static sm:mx-0 sm:border-t-0 sm:bg-transparent sm:px-0 sm:pb-0 sm:pt-0">
                 <button
                   type="button"
                   disabled={disableSubmit}
