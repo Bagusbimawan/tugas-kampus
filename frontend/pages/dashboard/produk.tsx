@@ -835,15 +835,13 @@ export default function DashboardProdukPage() {
                             </td>
                             <td className="px-4 py-4">
                               {product.imageUrl ? (
-                                <div className="flex items-center">
-                                  <img
-                                    src={product.imageUrl}
-                                    alt={product.name}
-                                    className="h-12 w-12 rounded-2xl object-cover"
-                                  />
-                                </div>
+                                <img
+                                  src={product.imageUrl}
+                                  alt={product.name}
+                                  className="h-12 w-12 rounded-2xl object-contain bg-slate-50 p-0.5"
+                                />
                               ) : (
-                                <span className="text-slate-400">Belum ada</span>
+                                <div className="h-12 w-12 rounded-2xl bg-slate-100" />
                               )}
                             </td>
                             <td className="px-4 py-4 text-slate-600">

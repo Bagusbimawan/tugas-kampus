@@ -94,6 +94,7 @@ export default function DashboardPage() {
       });
       return data;
     },
+    retry: 0,
     refetchInterval: 60000
   });
 
@@ -105,6 +106,7 @@ export default function DashboardPage() {
       });
       return data;
     },
+    retry: 0,
     refetchInterval: 60000
   });
 
@@ -340,6 +342,11 @@ export default function DashboardPage() {
                 </div>
               </div>
 
+              {topProductsQuery.isError ? (
+                <div className="rounded-[24px] border border-dashed border-slate-200 px-4 py-8 text-center">
+                  <p className="text-sm text-slate-500">Gagal memuat data produk terlaris.</p>
+                </div>
+              ) : (
               <div className="overflow-hidden rounded-[24px] border border-slate-200">
                 {/* Mobile card view */}
                 <div className="md:hidden">
@@ -401,6 +408,7 @@ export default function DashboardPage() {
                   </table>
                 </div>
               </div>
+              )}
             </div>
 
             <div className="rounded-[28px] border border-slate-200 bg-white p-5 shadow-sm sm:p-6">

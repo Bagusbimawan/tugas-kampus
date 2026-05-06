@@ -85,24 +85,21 @@ export const KasirLayout = ({ children }: KasirLayoutProps) => {
 
         <div className="flex min-h-screen flex-1 flex-col lg:pl-72">
           <header className="sticky top-0 z-30 border-b border-white/10 bg-slate-950/70 backdrop-blur">
-            <div className="flex flex-col gap-4 px-4 py-4 sm:px-6 lg:flex-row lg:items-center lg:justify-between">
-              <div className="flex items-start gap-3 sm:items-center">
-                <button
-                  type="button"
-                  className="rounded-xl border border-white/10 bg-white/5 p-2 lg:hidden"
-                  onClick={() => setIsOpen((value) => !value)}
-                >
-                  <Menu className="h-5 w-5" />
-                </button>
-                <div className="min-w-0">
-                  <p className="text-xs uppercase tracking-[0.3em] text-amber-300">
-                    {pageTitle}
-                  </p>
-                  <p className="text-sm text-slate-300">Transaksi real-time untuk kasir toko</p>
-                </div>
+            <div className="flex items-center gap-3 px-4 py-3 sm:px-6 sm:py-4">
+              <button
+                type="button"
+                className="shrink-0 rounded-xl border border-white/10 bg-white/5 p-2 lg:hidden"
+                onClick={() => setIsOpen((value) => !value)}
+              >
+                <Menu className="h-5 w-5" />
+              </button>
+              <div className="min-w-0 flex-1">
+                <p className="text-xs uppercase tracking-[0.3em] text-amber-300">{pageTitle}</p>
+                <p className="hidden text-sm text-slate-300 sm:block">
+                  Transaksi real-time untuk kasir toko
+                </p>
               </div>
-
-              <div className="flex w-full items-center justify-between gap-3 sm:w-auto sm:justify-end">
+              <div className="flex shrink-0 items-center gap-2">
                 <div className="hidden rounded-2xl border border-white/10 bg-white/5 px-4 py-2 text-right sm:block">
                   <p className="text-sm font-medium">{user?.name}</p>
                   <p className="text-xs uppercase tracking-[0.25em] text-slate-400">
