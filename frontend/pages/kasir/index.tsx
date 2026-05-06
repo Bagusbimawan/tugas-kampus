@@ -154,28 +154,28 @@ export default function KasirPage() {
   return (
     <AuthGuard allowedRoles={['admin', 'kasir']}>
       <KasirLayout>
-        <div className="mb-6 rounded-[28px] border border-white/10 bg-white/5 p-5 sm:p-6">
+        <div className="mb-4 rounded-[24px] border border-white/10 bg-white/5 p-4 sm:mb-6 sm:rounded-[28px] sm:p-6">
           <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
             <div>
               <p className="text-xs uppercase tracking-[0.35em] text-amber-300">{STORE_SETTINGS.name}</p>
-              <h1 className="mt-2 text-2xl font-semibold sm:text-3xl">Point of Sale</h1>
-              <p className="mt-2 max-w-2xl text-sm text-slate-300">
+              <h1 className="mt-1.5 text-xl font-semibold sm:mt-2 sm:text-3xl">Point of Sale</h1>
+              <p className="mt-1.5 hidden max-w-2xl text-sm text-slate-300 sm:mt-2 sm:block">
                 Cari produk, tambahkan ke keranjang, lalu proses pembayaran langsung dari satu layar.
               </p>
             </div>
 
             <div className="grid grid-cols-3 gap-2 sm:gap-3">
-              <div className="rounded-2xl border border-white/10 bg-slate-950/30 px-3 py-2 sm:px-4 sm:py-3">
-                <p className="text-xs uppercase tracking-[0.2em] text-slate-400">Item</p>
-                <p className="mt-1.5 text-base font-semibold text-amber-300 sm:text-xl">{items.length}</p>
+              <div className="rounded-2xl border border-white/10 bg-slate-950/30 px-2 py-2 sm:px-4 sm:py-3">
+                <p className="truncate text-[10px] uppercase text-slate-400 sm:text-xs sm:tracking-[0.2em]">Item</p>
+                <p className="mt-1 truncate text-sm font-semibold text-amber-300 sm:text-xl">{items.length}</p>
               </div>
-              <div className="rounded-2xl border border-white/10 bg-slate-950/30 px-3 py-2 sm:px-4 sm:py-3">
-                <p className="text-xs uppercase tracking-[0.2em] text-slate-400">Subtotal</p>
-                <p className="mt-1.5 truncate text-base font-semibold text-white sm:text-xl">{formatCurrency(subtotal)}</p>
+              <div className="rounded-2xl border border-white/10 bg-slate-950/30 px-2 py-2 sm:px-4 sm:py-3">
+                <p className="truncate text-[10px] uppercase text-slate-400 sm:text-xs sm:tracking-[0.2em]">Subtotal</p>
+                <p className="mt-1 truncate text-sm font-semibold text-white sm:text-xl">{formatCurrency(subtotal)}</p>
               </div>
-              <div className="rounded-2xl border border-white/10 bg-slate-950/30 px-3 py-2 sm:px-4 sm:py-3">
-                <p className="text-xs uppercase tracking-[0.2em] text-slate-400">Total</p>
-                <p className="mt-1.5 truncate text-base font-semibold text-emerald-300 sm:text-xl">{formatCurrency(total)}</p>
+              <div className="rounded-2xl border border-white/10 bg-slate-950/30 px-2 py-2 sm:px-4 sm:py-3">
+                <p className="truncate text-[10px] uppercase text-slate-400 sm:text-xs sm:tracking-[0.2em]">Total</p>
+                <p className="mt-1 truncate text-sm font-semibold text-emerald-300 sm:text-xl">{formatCurrency(total)}</p>
               </div>
             </div>
           </div>
