@@ -10,7 +10,6 @@ import Link from 'next/link';
 import { useMemo, useState } from 'react';
 import {
   Cell,
-  Legend,
   Line,
   LineChart,
   Pie,
@@ -254,9 +253,9 @@ export default function DashboardPage() {
                   <div className="h-full animate-pulse rounded-[24px] bg-slate-100" />
                 ) : (
                   <ResponsiveContainer width="100%" height="100%">
-                    <LineChart data={lineData}>
-                      <XAxis dataKey="label" stroke="#64748b" />
-                      <YAxis stroke="#64748b" tickFormatter={(value) => `${value} jt`} />
+                    <LineChart data={lineData} margin={{ top: 5, right: 10, left: 5, bottom: 5 }}>
+                      <XAxis dataKey="label" stroke="#64748b" tick={{ fontSize: 11 }} />
+                      <YAxis stroke="#64748b" tickFormatter={(value) => `${value} jt`} width={44} tick={{ fontSize: 11 }} />
                       <Tooltip
                         formatter={(value: number) => `${value} jt`}
                         labelFormatter={(label) => `Tanggal ${label}`}
@@ -294,8 +293,8 @@ export default function DashboardPage() {
                         data={pieData}
                         dataKey="totalRevenue"
                         nameKey="categoryName"
-                        innerRadius={72}
-                        outerRadius={110}
+                        innerRadius={55}
+                        outerRadius={88}
                         paddingAngle={4}
                       >
                         {pieData.map((entry) => (
@@ -303,7 +302,6 @@ export default function DashboardPage() {
                         ))}
                       </Pie>
                       <Tooltip formatter={(value: number) => formatCurrency(value)} />
-                      <Legend />
                     </PieChart>
                   </ResponsiveContainer>
                 )}

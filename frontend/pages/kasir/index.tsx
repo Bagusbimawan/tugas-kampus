@@ -164,18 +164,18 @@ export default function KasirPage() {
               </p>
             </div>
 
-            <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-              <div className="rounded-2xl border border-white/10 bg-slate-950/30 px-4 py-3">
-                <p className="text-xs uppercase tracking-[0.25em] text-slate-400">Item</p>
-                <p className="mt-2 text-xl font-semibold text-amber-300">{items.length}</p>
+            <div className="grid grid-cols-3 gap-2 sm:gap-3">
+              <div className="rounded-2xl border border-white/10 bg-slate-950/30 px-3 py-2 sm:px-4 sm:py-3">
+                <p className="text-xs uppercase tracking-[0.2em] text-slate-400">Item</p>
+                <p className="mt-1.5 text-base font-semibold text-amber-300 sm:text-xl">{items.length}</p>
               </div>
-              <div className="rounded-2xl border border-white/10 bg-slate-950/30 px-4 py-3">
-                <p className="text-xs uppercase tracking-[0.25em] text-slate-400">Subtotal</p>
-                <p className="mt-2 text-xl font-semibold text-white">{formatCurrency(subtotal)}</p>
+              <div className="rounded-2xl border border-white/10 bg-slate-950/30 px-3 py-2 sm:px-4 sm:py-3">
+                <p className="text-xs uppercase tracking-[0.2em] text-slate-400">Subtotal</p>
+                <p className="mt-1.5 truncate text-base font-semibold text-white sm:text-xl">{formatCurrency(subtotal)}</p>
               </div>
-              <div className="rounded-2xl border border-white/10 bg-slate-950/30 px-4 py-3">
-                <p className="text-xs uppercase tracking-[0.25em] text-slate-400">Total</p>
-                <p className="mt-2 text-xl font-semibold text-emerald-300">{formatCurrency(total)}</p>
+              <div className="rounded-2xl border border-white/10 bg-slate-950/30 px-3 py-2 sm:px-4 sm:py-3">
+                <p className="text-xs uppercase tracking-[0.2em] text-slate-400">Total</p>
+                <p className="mt-1.5 truncate text-base font-semibold text-emerald-300 sm:text-xl">{formatCurrency(total)}</p>
               </div>
             </div>
           </div>
@@ -225,12 +225,12 @@ export default function KasirPage() {
               </div>
             </div>
 
-            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-3">
               {isLoadingProducts
                 ? Array.from({ length: 6 }).map((_, index) => (
                     <div
                       key={index}
-                      className="h-52 animate-pulse rounded-[28px] border border-white/10 bg-white/5"
+                      className="h-44 animate-pulse rounded-[24px] border border-white/10 bg-white/5 sm:h-52 sm:rounded-[28px]"
                     />
                   ))
                 : displayedProducts.map((product) => {
@@ -247,45 +247,42 @@ export default function KasirPage() {
                             toast.success(`${product.name} ditambahkan`);
                           }
                         }}
-                        className={`overflow-hidden rounded-[28px] border p-0 text-left transition ${
+                        className={`overflow-hidden rounded-[24px] border p-0 text-left transition sm:rounded-[28px] ${
                           isOutOfStock
                             ? 'cursor-not-allowed border-white/5 bg-white/5 opacity-50'
                             : 'border-white/10 bg-white/5 hover:-translate-y-1 hover:border-amber-300/40'
                         }`}
                       >
                         {product.imageUrl ? (
-                          <div className="h-32 overflow-hidden bg-slate-900/40">
+                          <div className="aspect-[4/3] w-full overflow-hidden bg-slate-900/60">
                             <img
                               src={product.imageUrl}
                               alt={product.name}
-                              className="h-full w-full object-cover"
+                              className="h-full w-full object-contain p-1.5"
                             />
                           </div>
                         ) : (
-                          <div className="flex h-32 items-center justify-center bg-[linear-gradient(135deg,_rgba(250,204,21,0.2),_rgba(15,23,42,0.8))]">
-                            <ShoppingBasket className="h-10 w-10 text-white/70" />
+                          <div className="flex aspect-[4/3] w-full items-center justify-center bg-[linear-gradient(135deg,_rgba(250,204,21,0.15),_rgba(15,23,42,0.9))]">
+                            <ShoppingBasket className="h-8 w-8 text-white/40 sm:h-10 sm:w-10" />
                           </div>
                         )}
-                        <div className="space-y-3 p-4">
-                          <div className="flex items-start justify-between gap-3">
-                            <div>
-                              <p className="line-clamp-2 font-medium">{product.name}</p>
-                              <p className="mt-1 text-xs uppercase tracking-[0.2em] text-slate-400">
-                                {product.category?.name || 'Tanpa kategori'}
+                        <div className="space-y-2 p-3 sm:space-y-3 sm:p-4">
+                          <div>
+                            <p className="line-clamp-2 text-sm font-medium leading-snug sm:text-base">{product.name}</p>
+                            <div className="mt-1.5 flex items-center justify-between gap-1">
+                              <p className="text-xs uppercase tracking-[0.15em] text-slate-400 truncate">
+                                {product.category?.name || 'Umum'}
                               </p>
+                              <span
+                                className={`shrink-0 rounded-full px-2 py-0.5 text-xs font-medium ${getStockBadgeClass(product)}`}
+                              >
+                                {product.stock}
+                              </span>
                             </div>
-                            <span
-                              className={`rounded-full px-3 py-1 text-xs font-medium ${getStockBadgeClass(product)}`}
-                            >
-                              Stok {product.stock}
-                            </span>
                           </div>
-                          <div className="flex items-end justify-between">
-                            <p className="text-lg font-semibold text-amber-300">
-                              {formatCurrency(product.price)}
-                            </p>
-                            <p className="text-xs text-slate-400">Min {product.minStock}</p>
-                          </div>
+                          <p className="text-sm font-semibold text-amber-300 sm:text-base">
+                            {formatCurrency(product.price)}
+                          </p>
                         </div>
                       </button>
                     );
@@ -418,6 +415,28 @@ export default function KasirPage() {
             </button>
           </aside>
         </div>
+
+        {/* Floating cart bar — mobile only, above bottom nav */}
+        {items.length > 0 ? (
+          <div
+            className="fixed inset-x-0 z-20 px-3 lg:hidden"
+            style={{ bottom: 'calc(env(safe-area-inset-bottom) + 3.75rem)' }}
+          >
+            <div className="flex items-center justify-between rounded-2xl bg-amber-300 px-4 py-3 shadow-xl shadow-black/30">
+              <div>
+                <p className="text-xs font-medium text-amber-900">{items.length} item di keranjang</p>
+                <p className="text-base font-bold text-slate-950">{formatCurrency(total)}</p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsCheckoutOpen(true)}
+                className="rounded-xl bg-slate-950 px-4 py-2 text-sm font-semibold text-white"
+              >
+                Checkout
+              </button>
+            </div>
+          </div>
+        ) : null}
 
         <CheckoutModal
           isOpen={isCheckoutOpen}

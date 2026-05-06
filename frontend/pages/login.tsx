@@ -59,7 +59,25 @@ export default function LoginPage() {
   return (
     <div className="relative min-h-screen overflow-hidden bg-slate-950 text-white">
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,_rgba(250,204,21,0.18),_transparent_30%),radial-gradient(circle_at_bottom_right,_rgba(59,130,246,0.2),_transparent_25%)]" />
-      <div className="relative mx-auto flex min-h-screen max-w-7xl flex-col justify-center px-5 py-8 sm:px-8 lg:grid lg:grid-cols-[1.1fr_0.9fr] lg:gap-12">
+
+      {/* Mobile brand header — hidden on lg (replaced by left panel) */}
+      <div className="relative flex flex-col items-center px-5 pb-0 pt-10 text-center lg:hidden">
+        <div className="rounded-3xl bg-amber-300/15 p-4 text-amber-300">
+          <ScanLine className="h-8 w-8" />
+        </div>
+        <p className="mt-4 text-xs uppercase tracking-[0.45em] text-amber-300">
+          Kelompok 1 · 1KA20
+        </p>
+        <h1 className="mt-3 text-2xl font-semibold leading-snug sm:text-3xl">
+          Sistem Informasi Kasir
+        </h1>
+        <p className="mt-2 max-w-xs text-sm text-slate-400">
+          Login sesuai role Anda untuk mengakses transaksi, stok, dan laporan.
+        </p>
+      </div>
+
+      <div className="relative mx-auto flex min-h-0 max-w-7xl flex-col items-center gap-6 px-5 py-8 sm:px-8 lg:grid lg:min-h-screen lg:grid-cols-[1.1fr_0.9fr] lg:gap-12 lg:py-0">
+        {/* Left branding panel — desktop only */}
         <section className="hidden rounded-[32px] border border-white/10 bg-white/5 p-10 backdrop-blur lg:block">
           <div className="max-w-xl">
             <p className="text-xs uppercase tracking-[0.45em] text-amber-300">
@@ -90,8 +108,9 @@ export default function LoginPage() {
           </div>
         </section>
 
-        <section className="mx-auto w-full max-w-md rounded-[32px] border border-white/10 bg-white/10 p-6 shadow-2xl shadow-black/30 backdrop-blur sm:p-8">
-          <div className="mb-8 flex items-center gap-4">
+        {/* Login form */}
+        <section className="w-full max-w-md rounded-[32px] border border-white/10 bg-white/10 p-6 shadow-2xl shadow-black/30 backdrop-blur sm:p-8 lg:my-12">
+          <div className="mb-8 hidden items-center gap-4 lg:flex">
             <div className="rounded-3xl bg-amber-300/15 p-3 text-amber-300">
               <ScanLine className="h-7 w-7" />
             </div>
@@ -101,13 +120,15 @@ export default function LoginPage() {
             </div>
           </div>
 
+          <p className="mb-6 text-sm font-medium text-slate-300 lg:hidden">Masuk ke akun Anda</p>
+
           <form className="space-y-5" onSubmit={handleSubmit(onSubmit)}>
             <div>
               <label className="mb-2 block text-sm text-slate-200" htmlFor="email">
                 Email
               </label>
               <div className="flex items-center gap-3 rounded-2xl border border-white/10 bg-slate-950/40 px-4 py-3">
-                <Mail className="h-4 w-4 text-slate-400" />
+                <Mail className="h-4 w-4 shrink-0 text-slate-400" />
                 <input
                   id="email"
                   type="email"
@@ -126,7 +147,7 @@ export default function LoginPage() {
                 Password
               </label>
               <div className="flex items-center gap-3 rounded-2xl border border-white/10 bg-slate-950/40 px-4 py-3">
-                <LockKeyhole className="h-4 w-4 text-slate-400" />
+                <LockKeyhole className="h-4 w-4 shrink-0 text-slate-400" />
                 <input
                   id="password"
                   type="password"
@@ -143,15 +164,25 @@ export default function LoginPage() {
             <button
               type="submit"
               disabled={isSubmitting}
-              className="inline-flex w-full items-center justify-center rounded-2xl bg-amber-300 px-4 py-3 text-sm font-semibold text-slate-950 transition hover:bg-amber-200 disabled:cursor-not-allowed disabled:opacity-60"
+              className="inline-flex w-full items-center justify-center rounded-2xl bg-amber-300 px-4 py-3.5 text-sm font-semibold text-slate-950 transition hover:bg-amber-200 disabled:cursor-not-allowed disabled:opacity-60"
             >
               {isSubmitting ? 'Memproses...' : 'Masuk'}
             </button>
           </form>
 
-          <div className="mt-8 rounded-3xl border border-white/10 bg-slate-950/40 p-4 text-sm text-slate-300 lg:hidden">
-            Akses sistem kasir, dashboard operasional, dan laporan penjualan dari satu
-            akun sesuai role Anda.
+          <div className="mt-6 grid grid-cols-3 gap-2 lg:hidden">
+            <div className="rounded-2xl border border-white/10 bg-slate-950/30 p-3 text-center">
+              <p className="text-sm font-semibold text-amber-300">Real-time</p>
+              <p className="mt-1 text-xs text-slate-400">Transaksi</p>
+            </div>
+            <div className="rounded-2xl border border-white/10 bg-slate-950/30 p-3 text-center">
+              <p className="text-sm font-semibold text-cyan-300">Role</p>
+              <p className="mt-1 text-xs text-slate-400">Hak akses</p>
+            </div>
+            <div className="rounded-2xl border border-white/10 bg-slate-950/30 p-3 text-center">
+              <p className="text-sm font-semibold text-emerald-300">Laporan</p>
+              <p className="mt-1 text-xs text-slate-400">Terintegrasi</p>
+            </div>
           </div>
         </section>
       </div>

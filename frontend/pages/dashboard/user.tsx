@@ -370,7 +370,7 @@ export default function DashboardUserPage() {
     <AuthGuard allowedRoles={['admin']}>
       <DashboardLayout>
         <div className="space-y-6">
-          <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+          <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
             <SummaryCard
               icon={ShieldCheck}
               label="Total User"
@@ -423,7 +423,77 @@ export default function DashboardUserPage() {
             </div>
 
             <div className="mt-6 overflow-hidden rounded-[24px] border border-slate-200">
-              <div className="overflow-x-auto">
+              {/* Mobile card view */}
+              <div className="md:hidden divide-y divide-slate-200">
+                {usersQuery.isLoading
+                  ? Array.from({ length: 6 }).map((_, index) => (
+                      <div key={index} className="px-4 py-4">
+                        <div className="h-14 animate-pulse rounded-2xl bg-slate-100" />
+                      </div>
+                    ))
+                  : (usersQuery.data || []).map((user) => (
+                      <div key={user.id} className="flex items-center gap-3 px-4 py-4">
+                        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-slate-100">
+                          <span className="text-sm font-semibold text-slate-600">
+                            {user.name.charAt(0).toUpperCase()}
+                          </span>
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <p className="truncate font-medium text-slate-900">{user.name}</p>
+                          <p className="truncate text-xs text-slate-500">{user.email}</p>
+                          <div className="mt-1 flex flex-wrap items-center gap-1.5">
+                            <span className="rounded-full bg-slate-100 px-2 py-0.5 text-xs font-semibold text-slate-700">
+                              {getRoleLabel(user.role)}
+                            </span>
+                            <span
+                              className={`rounded-full px-2 py-0.5 text-xs font-semibold ${
+                                user.isActive
+                                  ? 'bg-emerald-100 text-emerald-700'
+                                  : 'bg-slate-200 text-slate-600'
+                              }`}
+                            >
+                              {user.isActive ? 'Aktif' : 'Nonaktif'}
+                            </span>
+                          </div>
+                        </div>
+                        <div className="flex shrink-0 gap-1.5">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setSelectedUser(user);
+                              setIsUserModalOpen(true);
+                            }}
+                            className="rounded-xl border border-slate-200 p-2 text-slate-600 transition hover:bg-slate-100"
+                          >
+                            <Pencil className="h-4 w-4" />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setPasswordTarget(user)}
+                            className="rounded-xl border border-slate-200 p-2 text-sky-700 transition hover:bg-sky-50"
+                          >
+                            <KeyRound className="h-4 w-4" />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const confirmed = window.confirm(
+                                'Apakah Anda yakin ingin menonaktifkan user ini?'
+                              );
+                              if (confirmed) {
+                                disableUserMutation.mutate(user.id);
+                              }
+                            }}
+                            className="rounded-xl border border-slate-200 p-2 text-rose-600 transition hover:bg-rose-50"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+              </div>
+              {/* Desktop table view */}
+              <div className="hidden md:block overflow-x-auto">
                 <table className="min-w-full divide-y divide-slate-200 text-sm">
                   <thead className="bg-slate-50 text-left text-slate-500">
                     <tr>
