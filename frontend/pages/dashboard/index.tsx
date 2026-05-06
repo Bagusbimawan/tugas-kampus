@@ -157,7 +157,7 @@ export default function DashboardPage() {
     <AuthGuard allowedRoles={['admin']}>
       <DashboardLayout>
         <div className="space-y-6">
-          <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+          <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
             <SummaryCard
               icon={Wallet}
               label="Pendapatan Hari Ini"
@@ -238,7 +238,7 @@ export default function DashboardPage() {
             </div>
           </section>
 
-          <section className="grid gap-6 xl:grid-cols-[1.2fr_0.8fr]">
+          <section className="grid gap-6 lg:grid-cols-[1.2fr_0.8fr]">
             <div className="rounded-[28px] border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
               <div className="mb-5">
                 <p className="text-xs uppercase tracking-[0.35em] text-amber-600">
@@ -249,7 +249,7 @@ export default function DashboardPage() {
                 </h2>
               </div>
 
-              <div className="h-[320px]">
+              <div className="h-[220px] sm:h-[260px] lg:h-[320px]">
                 {salesSummaryQuery.isLoading ? (
                   <div className="h-full animate-pulse rounded-[24px] bg-slate-100" />
                 ) : (
@@ -284,7 +284,7 @@ export default function DashboardPage() {
                 </h2>
               </div>
 
-              <div className="h-[320px]">
+              <div className="h-[220px] sm:h-[260px] lg:h-[320px]">
                 {categoryRevenueQuery.isLoading ? (
                   <div className="h-full animate-pulse rounded-[24px] bg-slate-100" />
                 ) : (
@@ -331,7 +331,7 @@ export default function DashboardPage() {
             </div>
           </section>
 
-          <section className="grid gap-6 xl:grid-cols-2">
+          <section className="grid gap-6 lg:grid-cols-2">
             <div className="rounded-[28px] border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
               <div className="mb-5 flex items-center justify-between">
                 <div>
@@ -343,7 +343,32 @@ export default function DashboardPage() {
               </div>
 
               <div className="overflow-hidden rounded-[24px] border border-slate-200">
-                <div className="overflow-x-auto">
+                {/* Mobile card view */}
+                <div className="md:hidden">
+                  {topProductsQuery.isLoading
+                    ? Array.from({ length: 5 }).map((_, index) => (
+                        <div key={index} className="px-4 py-3 border-b border-slate-100 last:border-0">
+                          <div className="h-10 animate-pulse rounded-2xl bg-slate-100" />
+                        </div>
+                      ))
+                    : (topProductsQuery.data || []).map((item, index) => (
+                        <div
+                          key={item.productId}
+                          className="flex items-center justify-between px-4 py-3 text-sm border-b border-slate-100 last:border-0"
+                        >
+                          <div className="flex items-center gap-3 min-w-0">
+                            <span className="w-5 shrink-0 font-medium text-slate-400">{index + 1}</span>
+                            <span className="font-medium text-slate-900 truncate">{item.productName}</span>
+                          </div>
+                          <div className="text-right shrink-0 ml-3">
+                            <p className="font-medium text-slate-900">{formatCurrency(item.totalRevenue)}</p>
+                            <p className="text-xs text-slate-500">{item.totalQty} qty</p>
+                          </div>
+                        </div>
+                      ))}
+                </div>
+                {/* Desktop table view */}
+                <div className="hidden md:block overflow-x-auto">
                   <table className="min-w-[36rem] divide-y divide-slate-200 text-sm">
                   <thead className="bg-slate-50 text-left text-slate-500">
                     <tr>
@@ -399,7 +424,42 @@ export default function DashboardPage() {
               </div>
 
               <div className="overflow-hidden rounded-[24px] border border-slate-200">
-                <div className="overflow-x-auto">
+                {/* Mobile card view */}
+                <div className="md:hidden">
+                  {stockAlertQuery.isLoading
+                    ? Array.from({ length: 5 }).map((_, index) => (
+                        <div key={index} className="px-4 py-3 border-b border-slate-100 last:border-0">
+                          <div className="h-10 animate-pulse rounded-2xl bg-slate-100" />
+                        </div>
+                      ))
+                    : (stockAlertQuery.data || []).map((item) => (
+                        <div
+                          key={item.id}
+                          className="flex items-center justify-between px-4 py-3 text-sm border-b border-slate-100 last:border-0"
+                        >
+                          <div className="min-w-0">
+                            <p className="font-medium text-slate-900 truncate">{item.name}</p>
+                            <p className="mt-0.5 text-xs text-slate-500">
+                              {item.category?.name || '-'} · Min {item.minStock}
+                            </p>
+                          </div>
+                          <div className="ml-3 text-right shrink-0">
+                            <p className="font-medium text-slate-900">Stok {item.stock}</p>
+                            <span
+                              className={`mt-1 inline-block rounded-full px-2 py-0.5 text-xs font-semibold ${
+                                item.stock === 0
+                                  ? 'bg-rose-100 text-rose-700'
+                                  : 'bg-amber-100 text-amber-700'
+                              }`}
+                            >
+                              {item.stock === 0 ? 'Habis' : 'Kritis'}
+                            </span>
+                          </div>
+                        </div>
+                      ))}
+                </div>
+                {/* Desktop table view */}
+                <div className="hidden md:block overflow-x-auto">
                   <table className="min-w-[40rem] divide-y divide-slate-200 text-sm">
                   <thead className="bg-slate-50 text-left text-slate-500">
                     <tr>

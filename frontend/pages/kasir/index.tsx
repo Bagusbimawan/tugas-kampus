@@ -164,7 +164,7 @@ export default function KasirPage() {
               </p>
             </div>
 
-            <div className="grid gap-3 sm:grid-cols-3">
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
               <div className="rounded-2xl border border-white/10 bg-slate-950/30 px-4 py-3">
                 <p className="text-xs uppercase tracking-[0.25em] text-slate-400">Item</p>
                 <p className="mt-2 text-xl font-semibold text-amber-300">{items.length}</p>
@@ -225,7 +225,7 @@ export default function KasirPage() {
               </div>
             </div>
 
-            <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
               {isLoadingProducts
                 ? Array.from({ length: 6 }).map((_, index) => (
                     <div
@@ -329,7 +329,7 @@ export default function KasirPage() {
                   </p>
                 </div>
               ) : (
-                <div className="max-h-[44vh] space-y-3 overflow-y-auto pr-1">
+                <div className="max-h-[55vh] space-y-3 overflow-y-auto pr-1 sm:max-h-[44vh]">
                   {items.map((item) => (
                     <div
                       key={item.productId}

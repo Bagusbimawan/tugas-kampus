@@ -140,7 +140,48 @@ export default function KasirRiwayatPage() {
             </div>
 
             <div className="mt-6 overflow-hidden rounded-[24px] border border-white/10">
-              <div className="overflow-x-auto">
+              {/* Mobile card view */}
+              <div className="md:hidden divide-y divide-white/10">
+                {transactionsQuery.isLoading
+                  ? Array.from({ length: 5 }).map((_, index) => (
+                      <div key={index} className="px-4 py-4">
+                        <div className="h-10 animate-pulse rounded-2xl bg-white/5" />
+                      </div>
+                    ))
+                  : rows.map((item: TransactionListItem) => (
+                      <div
+                        key={item.id}
+                        onClick={() => setSelectedTransactionId(item.id)}
+                        className="cursor-pointer px-4 py-4 transition hover:bg-white/5"
+                      >
+                        <div className="flex items-start justify-between gap-3">
+                          <div className="min-w-0">
+                            <p className="font-medium text-white">{item.invoiceNumber}</p>
+                            <p className="mt-0.5 text-xs text-slate-400">
+                              {formatTime(item.createdAt)} · {(item.payment?.method || '-').toUpperCase()}
+                            </p>
+                            <p className="mt-0.5 text-xs text-slate-400">
+                              {(item.items || []).reduce((sum, detail) => sum + detail.quantity, 0)} item
+                            </p>
+                          </div>
+                          <div className="text-right shrink-0">
+                            <p className="font-medium text-white">{formatCurrency(item.total)}</p>
+                            <span
+                              className={`mt-1 inline-block rounded-full px-2 py-0.5 text-xs font-semibold ${
+                                item.status === 'completed'
+                                  ? 'bg-emerald-500/15 text-emerald-300'
+                                  : 'bg-rose-500/15 text-rose-300'
+                              }`}
+                            >
+                              {item.status}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+              </div>
+              {/* Desktop table view */}
+              <div className="hidden md:block overflow-x-auto">
                 <table className="min-w-[44rem] divide-y divide-white/10 text-sm">
                   <thead className="bg-slate-950/40 text-left text-slate-400">
                     <tr>

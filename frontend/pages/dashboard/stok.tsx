@@ -329,7 +329,7 @@ export default function DashboardStokPage() {
     <AuthGuard allowedRoles={['admin', 'manager']}>
       <DashboardLayout>
         <div className="space-y-6">
-          <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+          <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
             <SummaryCard
               icon={AlertTriangle}
               label="Produk Kritis"
@@ -404,7 +404,40 @@ export default function DashboardStokPage() {
             </div>
 
             <div className="overflow-hidden rounded-[24px] border border-slate-200">
-              <div className="overflow-x-auto">
+              {/* Mobile card view */}
+              <div className="md:hidden divide-y divide-slate-200">
+                {stockAlertQuery.isLoading
+                  ? Array.from({ length: 5 }).map((_, index) => (
+                      <div key={index} className="px-4 py-4">
+                        <div className="h-10 animate-pulse rounded-2xl bg-slate-100" />
+                      </div>
+                    ))
+                  : filteredAlerts.map((item) => (
+                      <div key={item.id} className="flex items-center justify-between px-4 py-4 text-sm">
+                        <div className="min-w-0">
+                          <p className="font-medium text-slate-900 truncate">{item.name}</p>
+                          <p className="mt-0.5 text-xs text-slate-500">
+                            {item.category?.name || '-'} · {formatCurrency(item.price)}
+                          </p>
+                          <p className="mt-0.5 text-xs text-slate-500">Min {item.minStock}</p>
+                        </div>
+                        <div className="ml-3 text-right shrink-0">
+                          <p className="font-medium text-slate-900">Stok {item.stock}</p>
+                          <span
+                            className={`mt-1 inline-block rounded-full px-2 py-0.5 text-xs font-semibold ${
+                              item.stock === 0
+                                ? 'bg-rose-100 text-rose-700'
+                                : 'bg-amber-100 text-amber-700'
+                            }`}
+                          >
+                            {item.stock === 0 ? 'Habis' : 'Kritis'}
+                          </span>
+                        </div>
+                      </div>
+                    ))}
+              </div>
+              {/* Desktop table view */}
+              <div className="hidden md:block overflow-x-auto">
                 <table className="min-w-full divide-y divide-slate-200 text-sm">
                   <thead className="bg-slate-50 text-left text-slate-500">
                     <tr>
@@ -466,7 +499,7 @@ export default function DashboardStokPage() {
                 </h2>
               </div>
 
-              <div className="grid gap-3 lg:grid-cols-4">
+              <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
                 <input
                   type="date"
                   value={draftRange.startDate}
@@ -527,7 +560,51 @@ export default function DashboardStokPage() {
             </div>
 
             <div className="overflow-hidden rounded-[24px] border border-slate-200">
-              <div className="overflow-x-auto">
+              {/* Mobile card view */}
+              <div className="md:hidden divide-y divide-slate-200">
+                {stockLogsQuery.isLoading
+                  ? Array.from({ length: 6 }).map((_, index) => (
+                      <div key={index} className="px-4 py-4">
+                        <div className="h-10 animate-pulse rounded-2xl bg-slate-100" />
+                      </div>
+                    ))
+                  : logRows.map((item) => (
+                      <div key={item.id} className="px-4 py-4 text-sm">
+                        <div className="flex items-start justify-between gap-3">
+                          <div className="min-w-0">
+                            <p className="font-medium text-slate-900 truncate">
+                              {item.product?.name || '-'}
+                            </p>
+                            <p className="mt-0.5 text-xs text-slate-500">
+                              {new Date(item.createdAt).toLocaleString('id-ID')}
+                            </p>
+                            <p className="mt-0.5 text-xs text-slate-500 truncate">{item.reason}</p>
+                          </div>
+                          <div className="text-right shrink-0">
+                            <p className="font-medium text-slate-900">
+                              {item.qtyBefore} → {item.qtyAfter}
+                              <span className="ml-1 text-xs font-semibold">
+                                ({item.qtyChange > 0 ? `+${item.qtyChange}` : item.qtyChange})
+                              </span>
+                            </p>
+                            <span
+                              className={`mt-1 inline-block rounded-full px-2 py-0.5 text-xs font-semibold ${
+                                item.type === 'in'
+                                  ? 'bg-emerald-100 text-emerald-700'
+                                  : item.type === 'out'
+                                    ? 'bg-rose-100 text-rose-700'
+                                    : 'bg-amber-100 text-amber-700'
+                              }`}
+                            >
+                              {item.type}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+              </div>
+              {/* Desktop table view */}
+              <div className="hidden md:block overflow-x-auto">
                 <table className="min-w-full divide-y divide-slate-200 text-sm">
                   <thead className="bg-slate-50 text-left text-slate-500">
                     <tr>

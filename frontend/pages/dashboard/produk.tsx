@@ -695,7 +695,7 @@ export default function DashboardProdukPage() {
               ) : null}
             </div>
 
-            <div className="mt-6 grid gap-3 lg:grid-cols-[1.4fr_0.9fr_0.8fr]">
+            <div className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-[1.4fr_0.9fr_0.8fr]">
               <div className="relative">
                 <Search className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
                 <input
@@ -735,7 +735,76 @@ export default function DashboardProdukPage() {
             </div>
 
             <div className="mt-6 overflow-hidden rounded-[24px] border border-slate-200">
-              <div className="overflow-x-auto">
+              {/* Mobile card view */}
+              <div className="md:hidden divide-y divide-slate-200">
+                {productsQuery.isLoading
+                  ? Array.from({ length: 6 }).map((_, index) => (
+                      <div key={index} className="px-4 py-4">
+                        <div className="h-12 animate-pulse rounded-2xl bg-slate-100" />
+                      </div>
+                    ))
+                  : productRows.map((product) => (
+                      <div key={product.id} className="flex items-center gap-3 px-4 py-4">
+                        {product.imageUrl ? (
+                          <img
+                            src={product.imageUrl}
+                            alt={product.name}
+                            className="h-12 w-12 shrink-0 rounded-2xl object-cover"
+                          />
+                        ) : (
+                          <div className="h-12 w-12 shrink-0 rounded-2xl bg-slate-100" />
+                        )}
+                        <div className="min-w-0 flex-1">
+                          <p className="truncate font-medium text-slate-900">{product.name}</p>
+                          <p className="mt-0.5 text-xs text-slate-500">
+                            {product.category?.name || '-'} · {formatCurrency(product.price)}
+                          </p>
+                          <div className="mt-1 flex items-center gap-2">
+                            <span
+                              className={`text-xs font-medium ${
+                                product.stock <= product.minStock ? 'text-rose-600' : 'text-slate-600'
+                              }`}
+                            >
+                              Stok {product.stock}
+                            </span>
+                            <span
+                              className={`rounded-full px-2 py-0.5 text-xs font-semibold ${
+                                product.isActive
+                                  ? 'bg-emerald-100 text-emerald-700'
+                                  : 'bg-slate-200 text-slate-600'
+                              }`}
+                            >
+                              {product.isActive ? 'Aktif' : 'Nonaktif'}
+                            </span>
+                          </div>
+                        </div>
+                        {!isManagerView ? (
+                          <div className="flex shrink-0 gap-2">
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setProductFormError(null);
+                                setSelectedProduct(product);
+                                setIsProductModalOpen(true);
+                              }}
+                              className="rounded-xl border border-slate-200 p-2 text-slate-600 transition hover:bg-slate-100"
+                            >
+                              <Pencil className="h-4 w-4" />
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => setProductToDisable(product)}
+                              className="rounded-xl border border-slate-200 p-2 text-rose-600 transition hover:bg-rose-50"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </button>
+                          </div>
+                        ) : null}
+                      </div>
+                    ))}
+              </div>
+              {/* Desktop table view */}
+              <div className="hidden md:block overflow-x-auto">
                 <table className="min-w-full divide-y divide-slate-200 text-sm">
                   <thead className="bg-slate-50 text-left text-slate-500">
                     <tr>
@@ -889,7 +958,7 @@ export default function DashboardProdukPage() {
                         className="rounded-[24px] border border-slate-200 bg-slate-50 p-4"
                       >
                         {editingCategoryId === category.id ? (
-                          <div className="grid gap-3 lg:grid-cols-[1fr_1.2fr_auto]">
+                          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-[1fr_1.2fr_auto]">
                             <input
                               value={categoryDraft.name}
                               onChange={(event) =>
@@ -974,7 +1043,7 @@ export default function DashboardProdukPage() {
 
                   <div className="rounded-[24px] border border-dashed border-slate-300 bg-slate-50 p-4">
                     <p className="text-sm font-semibold text-slate-900">Tambah Kategori</p>
-                    <div className="mt-4 grid gap-3 lg:grid-cols-[1fr_1.2fr_auto]">
+                    <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-[1fr_1.2fr_auto]">
                       <input
                         value={newCategory.name}
                         onChange={(event) =>

@@ -180,7 +180,48 @@ export default function DashboardRiwayatPage() {
             </div>
 
             <div className="mt-6 overflow-hidden rounded-[24px] border border-slate-200">
-              <div className="overflow-x-auto">
+              {/* Mobile card view */}
+              <div className="md:hidden divide-y divide-slate-200">
+                {transactionsQuery.isLoading
+                  ? Array.from({ length: 6 }).map((_, index) => (
+                      <div key={index} className="px-4 py-4">
+                        <div className="h-12 animate-pulse rounded-2xl bg-slate-100" />
+                      </div>
+                    ))
+                  : filteredTransactions.map((item: TransactionListItem) => (
+                      <div
+                        key={item.id}
+                        onClick={() => setSelectedTransactionId(item.id)}
+                        className="cursor-pointer px-4 py-4 transition hover:bg-slate-50"
+                      >
+                        <div className="flex items-start justify-between gap-3">
+                          <div className="min-w-0">
+                            <p className="font-medium text-slate-900">{item.invoiceNumber}</p>
+                            <p className="mt-0.5 text-xs text-slate-500">
+                              {new Date(item.createdAt).toLocaleString('id-ID')}
+                            </p>
+                            <p className="mt-0.5 text-xs text-slate-500">
+                              {item.user?.name || '-'} · {(item.payment?.method || '-').toUpperCase()}
+                            </p>
+                          </div>
+                          <div className="text-right shrink-0">
+                            <p className="font-medium text-slate-900">{formatCurrency(item.total)}</p>
+                            <span
+                              className={`mt-1 inline-block rounded-full px-2 py-0.5 text-xs font-semibold ${
+                                item.status === 'completed'
+                                  ? 'bg-emerald-100 text-emerald-700'
+                                  : 'bg-rose-100 text-rose-700'
+                              }`}
+                            >
+                              {item.status}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+              </div>
+              {/* Desktop table view */}
+              <div className="hidden md:block overflow-x-auto">
                 <table className="min-w-[52rem] divide-y divide-slate-200 text-sm">
                   <thead className="bg-slate-50 text-left text-slate-500">
                     <tr>

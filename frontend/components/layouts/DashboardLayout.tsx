@@ -148,8 +148,8 @@ export const DashboardLayout = ({ children }: DashboardLayoutProps) => {
                 </div>
               </div>
 
-              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between lg:justify-end">
-                <div className="rounded-2xl border border-slate-200 bg-white px-4 py-2 text-left sm:text-right">
+              <div className="flex items-center gap-3 lg:justify-end">
+                <div className="hidden sm:block rounded-2xl border border-slate-200 bg-white px-4 py-2 text-right">
                   <p className="text-sm font-medium text-slate-900">{user?.name}</p>
                   <p className="text-xs uppercase tracking-[0.25em] text-slate-500">
                     {getRoleLabel(user?.role)}
@@ -158,10 +158,10 @@ export const DashboardLayout = ({ children }: DashboardLayoutProps) => {
                 <button
                   type="button"
                   onClick={handleLogout}
-                  className="inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-slate-950 px-4 py-2 text-sm font-medium text-white transition hover:bg-slate-800 sm:w-auto"
+                  className="inline-flex items-center justify-center gap-2 rounded-2xl bg-slate-950 px-3 py-2 text-sm font-medium text-white transition hover:bg-slate-800 sm:px-4"
                 >
                   <LogOut className="h-4 w-4" />
-                  Keluar
+                  <span className="hidden sm:inline">Keluar</span>
                 </button>
               </div>
             </div>
