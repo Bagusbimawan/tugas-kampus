@@ -76,7 +76,7 @@ export default function LoginPage() {
         </p>
       </div>
 
-      <div className="relative mx-auto flex min-h-0 max-w-7xl flex-col items-center gap-6 px-5 py-8 sm:px-8 lg:grid lg:min-h-screen lg:grid-cols-[1.1fr_0.9fr] lg:gap-12 lg:py-0">
+      <div className="relative mx-auto flex min-h-0 max-w-7xl flex-col items-center gap-6 px-4 py-8 sm:px-8 lg:grid lg:min-h-screen lg:grid-cols-[1.1fr_0.9fr] lg:gap-12 lg:py-0">
         {/* Left branding panel — desktop only */}
         <section className="hidden rounded-[32px] border border-white/10 bg-white/5 p-10 backdrop-blur lg:block">
           <div className="max-w-xl">
@@ -109,7 +109,7 @@ export default function LoginPage() {
         </section>
 
         {/* Login form */}
-        <section className="w-full max-w-md rounded-[32px] border border-white/10 bg-white/10 p-6 shadow-2xl shadow-black/30 backdrop-blur sm:p-8 lg:my-12">
+        <section className="w-full max-w-md rounded-[28px] border border-white/10 bg-white/10 p-5 shadow-2xl shadow-black/30 backdrop-blur sm:rounded-[32px] sm:p-8 lg:my-12">
           <div className="mb-8 hidden items-center gap-4 lg:flex">
             <div className="rounded-3xl bg-amber-300/15 p-3 text-amber-300">
               <ScanLine className="h-7 w-7" />
@@ -133,7 +133,7 @@ export default function LoginPage() {
                   id="email"
                   type="email"
                   placeholder="nama@toko.com"
-                  className="w-full bg-transparent text-sm outline-none placeholder:text-slate-500"
+                  className="auth-input w-full bg-transparent text-sm text-slate-100 outline-none placeholder:text-slate-500"
                   {...register('email')}
                 />
               </div>
@@ -152,7 +152,7 @@ export default function LoginPage() {
                   id="password"
                   type="password"
                   placeholder="Minimal 6 karakter"
-                  className="w-full bg-transparent text-sm outline-none placeholder:text-slate-500"
+                  className="auth-input w-full bg-transparent text-sm text-slate-100 outline-none placeholder:text-slate-500"
                   {...register('password')}
                 />
               </div>
@@ -170,7 +170,7 @@ export default function LoginPage() {
             </button>
           </form>
 
-          <div className="mt-6 grid grid-cols-3 gap-2 lg:hidden">
+          <div className="mt-6 grid grid-cols-1 gap-2 min-[360px]:grid-cols-3 lg:hidden">
             <div className="rounded-2xl border border-white/10 bg-slate-950/30 p-3 text-center">
               <p className="text-sm font-semibold text-amber-300">Real-time</p>
               <p className="mt-1 text-xs text-slate-400">Transaksi</p>

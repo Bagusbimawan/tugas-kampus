@@ -297,7 +297,7 @@ export default function DashboardRiwayatPage() {
                 Menampilkan halaman {transactionsQuery.data?.page || 1} dari{' '}
                 {transactionsQuery.data?.totalPages || 1}
               </p>
-              <div className="flex w-full gap-3 sm:w-auto">
+              <div className="grid w-full grid-cols-2 gap-3 sm:flex sm:w-auto">
                 <button
                   type="button"
                   disabled={page <= 1}

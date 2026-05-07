@@ -44,6 +44,14 @@ textarea {
   font: inherit;
 }
 
+.auth-input:-webkit-autofill,
+.auth-input:-webkit-autofill:hover,
+.auth-input:-webkit-autofill:focus {
+  -webkit-text-fill-color: #e2e8f0;
+  transition: background-color 9999s ease-in-out 0s;
+  box-shadow: 0 0 0px 1000px rgba(15, 23, 42, 0.75) inset;
+}
+
 .overflow-x-auto {
   scrollbar-width: thin;
   scrollbar-color: #cbd5e1 transparent;

@@ -20,6 +20,57 @@ const normalizeDateRange = (startDate?: string, endDate?: string) => {
 
 const toNumber = (value: unknown) => Number(value || 0);
 
+const buildDateKey = (value: Date) => {
+  const year = value.getUTCFullYear();
+  const month = String(value.getUTCMonth() + 1).padStart(2, '0');
+  const day = String(value.getUTCDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+};
+
+const buildContinuousDailyData = (
+  rows: Array<{ date: string; revenue: unknown; transactions: unknown }>,
+  startDate?: string,
+  endDate?: string
+) => {
+  if (!startDate || !endDate) {
+    return rows.map((item) => ({
+      date: item.date,
+      revenue: toNumber(item.revenue),
+      transactions: toNumber(item.transactions)
+    }));
+  }
+
+  const normalizedRows = new Map(
+    rows.map((item) => [
+      buildDateKey(new Date(item.date)),
+      {
+        revenue: toNumber(item.revenue),
+        transactions: toNumber(item.transactions)
+      }
+    ])
+  );
+
+  const start = new Date(startDate);
+  start.setUTCHours(0, 0, 0, 0);
+  const end = new Date(endDate);
+  end.setUTCHours(0, 0, 0, 0);
+
+  const result: Array<{ date: string; revenue: number; transactions: number }> = [];
+
+  for (const cursor = new Date(start); cursor <= end; cursor.setUTCDate(cursor.getUTCDate() + 1)) {
+    const dateKey = buildDateKey(cursor);
+    const existing = normalizedRows.get(dateKey);
+
+    result.push({
+      date: dateKey,
+      revenue: existing?.revenue || 0,
+      transactions: existing?.transactions || 0
+    });
+  }
+
+  return result;
+};
+
 export const reportService = {
   async getSalesSummary(params: ReportQueryInput) {
     const normalizedDates = normalizeDateRange(params.startDate, params.endDate);
@@ -42,11 +93,11 @@ export const reportService = {
       totalTransactions,
       totalItems,
       avgOrderValue: totalTransactions > 0 ? totalRevenue / totalTransactions : 0,
-      dailyData: dailyData.map((item: any) => ({
-        date: item.date,
-        revenue: toNumber(item.revenue),
-        transactions: toNumber(item.transactions)
-      }))
+      dailyData: buildContinuousDailyData(
+        dailyData,
+        normalizedDates.startDate,
+        normalizedDates.endDate
+      )
     };
   },
 
@@ -96,4 +147,3 @@ export const reportService = {
     }));
   }
 };
-

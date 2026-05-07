@@ -127,6 +127,23 @@ const parseRupiahInput = (value: string) => {
   return Number(digitsOnly);
 };
 
+const toAbsoluteImageUrl = (value?: string | null) => {
+  if (!value) {
+    return null;
+  }
+
+  if (/^https?:\/\//i.test(value)) {
+    return value;
+  }
+
+  const apiBaseUrl = process.env.NEXT_PUBLIC_API_URL;
+  if (!apiBaseUrl) {
+    return value;
+  }
+
+  return `${apiBaseUrl.replace(/\/+$/, '')}/${value.replace(/^\/+/, '')}`;
+};
+
 interface ProductFormModalProps {
   categories: Category[];
   initialProduct: Product | null;
@@ -194,7 +211,7 @@ const ProductFormModal = ({
       isActive: initialProduct.isActive
     });
     setImageFile(null);
-    setImagePreviewUrl(initialProduct.imageUrl || '');
+    setImagePreviewUrl(toAbsoluteImageUrl(initialProduct.imageUrl) || '');
   }, [initialProduct, isOpen, reset]);
 
   useEffect(() => {
@@ -372,7 +389,11 @@ const ProductFormModal = ({
                   <div className="min-w-0 flex-1">
                     <p className="text-sm font-medium text-slate-900">Preview gambar</p>
                     <p className="mt-1 text-xs text-slate-500">
-                      {imageFile ? imageFile.name : 'Gambar produk saat ini'}
+                    {imageFile
+                      ? imageFile.name
+                      : imagePreviewUrl
+                        ? 'Gambar produk dari AWS/S3'
+                        : 'Gambar produk saat ini'}
                     </p>
                   </div>
                 </div>
@@ -437,10 +458,10 @@ const ConfirmDialog = ({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/70 p-6 backdrop-blur">
-      <div className="w-full max-w-md rounded-[28px] border border-slate-200 bg-white p-6">
+      <div className="w-full rounded-t-[28px] border border-slate-200 bg-white p-5 sm:max-w-md sm:rounded-[28px] sm:p-6">
         <h3 className="text-xl font-semibold text-slate-900">{title}</h3>
         <p className="mt-3 text-sm text-slate-600">{description}</p>
-        <div className="mt-6 flex gap-3">
+        <div className="mt-6 flex flex-col gap-3 sm:flex-row">
           <button
             type="button"
             onClick={onClose}
@@ -744,10 +765,10 @@ export default function DashboardProdukPage() {
                       </div>
                     ))
                   : productRows.map((product) => (
-                      <div key={product.id} className="flex items-center gap-3 px-4 py-4">
-                        {product.imageUrl ? (
+                      <div key={product.id} className="flex items-start gap-3 px-4 py-4">
+                        {toAbsoluteImageUrl(product.imageUrl) ? (
                           <img
-                            src={product.imageUrl}
+                            src={toAbsoluteImageUrl(product.imageUrl) || undefined}
                             alt={product.name}
                             className="h-12 w-12 shrink-0 rounded-2xl object-cover"
                           />
@@ -759,7 +780,7 @@ export default function DashboardProdukPage() {
                           <p className="mt-0.5 text-xs text-slate-500">
                             {product.category?.name || '-'} · {formatCurrency(product.price)}
                           </p>
-                          <div className="mt-1 flex items-center gap-2">
+                          <div className="mt-1 flex flex-wrap items-center gap-2">
                             <span
                               className={`text-xs font-medium ${
                                 product.stock <= product.minStock ? 'text-rose-600' : 'text-slate-600'
@@ -779,7 +800,7 @@ export default function DashboardProdukPage() {
                           </div>
                         </div>
                         {!isManagerView ? (
-                          <div className="flex shrink-0 gap-2">
+                          <div className="flex shrink-0 flex-col gap-2 min-[360px]:flex-row">
                             <button
                               type="button"
                               onClick={() => {
@@ -834,9 +855,9 @@ export default function DashboardProdukPage() {
                               {product.name}
                             </td>
                             <td className="px-4 py-4">
-                              {product.imageUrl ? (
+                              {toAbsoluteImageUrl(product.imageUrl) ? (
                                 <img
-                                  src={product.imageUrl}
+                                  src={toAbsoluteImageUrl(product.imageUrl) || undefined}
                                   alt={product.name}
                                   className="h-12 w-12 rounded-2xl object-contain bg-slate-50 p-0.5"
                                 />
@@ -901,12 +922,12 @@ export default function DashboardProdukPage() {
               </div>
             </div>
 
-            <div className="mt-5 flex items-center justify-between">
+            <div className="mt-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
               <p className="text-sm text-slate-500">
                 Menampilkan halaman {productsQuery.data?.page || 1} dari{' '}
                 {productsQuery.data?.totalPages || 1}
               </p>
-              <div className="flex gap-3">
+              <div className="grid grid-cols-2 gap-3 sm:flex">
                 <button
                   type="button"
                   disabled={page <= 1}
@@ -979,7 +1000,7 @@ export default function DashboardProdukPage() {
                               placeholder="Deskripsi"
                               className="rounded-2xl border border-slate-200 bg-white px-4 py-3 outline-none"
                             />
-                            <div className="flex gap-2">
+                            <div className="flex flex-col gap-2 min-[360px]:flex-row">
                               <button
                                 type="button"
                                 onClick={() =>
@@ -1009,7 +1030,7 @@ export default function DashboardProdukPage() {
                                 {category.description || 'Tanpa deskripsi'}
                               </p>
                             </div>
-                            <div className="flex gap-2">
+                            <div className="flex flex-wrap gap-2">
                               <button
                                 type="button"
                                 onClick={() => startEditCategory(category)}

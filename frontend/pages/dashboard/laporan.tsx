@@ -195,14 +195,14 @@ export default function DashboardLaporanPage() {
                 </p>
               </div>
 
-              <div className="flex flex-col gap-3 sm:flex-row">
+              <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
                 <input
                   type="date"
                   value={draftRange.startDate}
                   onChange={(event) =>
                     setDraftRange((current) => ({ ...current, startDate: event.target.value }))
                   }
-                  className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 outline-none"
+                  className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 outline-none"
                 />
                 <input
                   type="date"
@@ -210,7 +210,7 @@ export default function DashboardLaporanPage() {
                   onChange={(event) =>
                     setDraftRange((current) => ({ ...current, endDate: event.target.value }))
                   }
-                  className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 outline-none"
+                  className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 outline-none"
                 />
                 <button
                   type="button"
@@ -366,11 +366,11 @@ export default function DashboardLaporanPage() {
                 </h2>
               </div>
 
-              <div className="inline-flex rounded-2xl border border-slate-200 bg-slate-50 p-1">
+              <div className="inline-flex w-full overflow-x-auto rounded-2xl border border-slate-200 bg-slate-50 p-1 sm:w-auto">
                 <button
                   type="button"
                   onClick={() => setActiveTab('products')}
-                  className={`rounded-2xl px-4 py-2 text-sm font-semibold ${
+                  className={`whitespace-nowrap rounded-2xl px-4 py-2 text-sm font-semibold ${
                     activeTab === 'products'
                       ? 'bg-slate-950 text-white'
                       : 'text-slate-600'
@@ -381,7 +381,7 @@ export default function DashboardLaporanPage() {
                 <button
                   type="button"
                   onClick={() => setActiveTab('cashier')}
-                  className={`rounded-2xl px-4 py-2 text-sm font-semibold ${
+                  className={`whitespace-nowrap rounded-2xl px-4 py-2 text-sm font-semibold ${
                     activeTab === 'cashier'
                       ? 'bg-slate-950 text-white'
                       : 'text-slate-600'
@@ -394,57 +394,90 @@ export default function DashboardLaporanPage() {
 
             {activeTab === 'products' ? (
               <div className="overflow-hidden rounded-[24px] border border-slate-200">
-                <table className="min-w-full divide-y divide-slate-200 text-sm">
-                  <thead className="bg-slate-50 text-left text-slate-500">
-                    <tr>
-                      <th className="px-4 py-4">#</th>
-                      <th className="px-4 py-4">Nama Produk</th>
-                      <th className="px-4 py-4">Qty Terjual</th>
-                      <th className="px-4 py-4 text-right">Total Revenue</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-slate-200 bg-white">
-                    {(topProductsQuery.data || []).map((item, index) => (
-                      <tr key={item.productId}>
-                        <td className="px-4 py-4 text-slate-500">{index + 1}</td>
-                        <td className="px-4 py-4 font-medium text-slate-900">
-                          {item.productName}
-                        </td>
-                        <td className="px-4 py-4 text-slate-600">{item.totalQty}</td>
-                        <td className="px-4 py-4 text-right text-slate-900">
-                          {formatCurrency(item.totalRevenue)}
-                        </td>
+                <div className="divide-y divide-slate-200 sm:hidden">
+                  {(topProductsQuery.data || []).map((item, index) => (
+                    <div key={item.productId} className="flex items-center justify-between gap-3 px-4 py-3 text-sm">
+                      <div className="min-w-0">
+                        <p className="text-xs font-medium text-slate-400">#{index + 1}</p>
+                        <p className="truncate font-medium text-slate-900">{item.productName}</p>
+                        <p className="mt-0.5 text-xs text-slate-500">{item.totalQty} qty</p>
+                      </div>
+                      <p className="shrink-0 text-right font-medium text-slate-900">
+                        {formatCurrency(item.totalRevenue)}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+                <div className="hidden sm:block overflow-x-auto">
+                  <table className="min-w-full divide-y divide-slate-200 text-sm">
+                    <thead className="bg-slate-50 text-left text-slate-500">
+                      <tr>
+                        <th className="px-4 py-4">#</th>
+                        <th className="px-4 py-4">Nama Produk</th>
+                        <th className="px-4 py-4">Qty Terjual</th>
+                        <th className="px-4 py-4 text-right">Total Revenue</th>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
+                    </thead>
+                    <tbody className="divide-y divide-slate-200 bg-white">
+                      {(topProductsQuery.data || []).map((item, index) => (
+                        <tr key={item.productId}>
+                          <td className="px-4 py-4 text-slate-500">{index + 1}</td>
+                          <td className="px-4 py-4 font-medium text-slate-900">
+                            {item.productName}
+                          </td>
+                          <td className="px-4 py-4 text-slate-600">{item.totalQty}</td>
+                          <td className="px-4 py-4 text-right text-slate-900">
+                            {formatCurrency(item.totalRevenue)}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
               </div>
             ) : (
               <div className="overflow-hidden rounded-[24px] border border-slate-200">
-                <table className="min-w-full divide-y divide-slate-200 text-sm">
-                  <thead className="bg-slate-50 text-left text-slate-500">
-                    <tr>
-                      <th className="px-4 py-4">Nama Kasir</th>
-                      <th className="px-4 py-4">Jumlah Transaksi</th>
-                      <th className="px-4 py-4 text-right">Total Revenue</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-slate-200 bg-white">
-                    {(cashierReportQuery.data || []).map((item) => (
-                      <tr key={item.userId}>
-                        <td className="px-4 py-4 font-medium text-slate-900">
-                          {item.userName}
-                        </td>
-                        <td className="px-4 py-4 text-slate-600">
-                          {item.totalTransactions}
-                        </td>
-                        <td className="px-4 py-4 text-right text-slate-900">
-                          {formatCurrency(item.totalRevenue)}
-                        </td>
+                <div className="divide-y divide-slate-200 sm:hidden">
+                  {(cashierReportQuery.data || []).map((item) => (
+                    <div key={item.userId} className="flex items-center justify-between gap-3 px-4 py-3 text-sm">
+                      <div className="min-w-0">
+                        <p className="truncate font-medium text-slate-900">{item.userName}</p>
+                        <p className="mt-0.5 text-xs text-slate-500">
+                          {item.totalTransactions} transaksi
+                        </p>
+                      </div>
+                      <p className="shrink-0 text-right font-medium text-slate-900">
+                        {formatCurrency(item.totalRevenue)}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+                <div className="hidden sm:block overflow-x-auto">
+                  <table className="min-w-full divide-y divide-slate-200 text-sm">
+                    <thead className="bg-slate-50 text-left text-slate-500">
+                      <tr>
+                        <th className="px-4 py-4">Nama Kasir</th>
+                        <th className="px-4 py-4">Jumlah Transaksi</th>
+                        <th className="px-4 py-4 text-right">Total Revenue</th>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
+                    </thead>
+                    <tbody className="divide-y divide-slate-200 bg-white">
+                      {(cashierReportQuery.data || []).map((item) => (
+                        <tr key={item.userId}>
+                          <td className="px-4 py-4 font-medium text-slate-900">
+                            {item.userName}
+                          </td>
+                          <td className="px-4 py-4 text-slate-600">
+                            {item.totalTransactions}
+                          </td>
+                          <td className="px-4 py-4 text-right text-slate-900">
+                            {formatCurrency(item.totalRevenue)}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
               </div>
             )}
           </section>

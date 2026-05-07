@@ -106,7 +106,7 @@ const UserFormModal = ({
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end bg-slate-950/70 p-0 backdrop-blur sm:items-center sm:justify-center sm:p-6">
+    <div className="fixed inset-0 z-50 flex items-end overflow-y-auto bg-slate-950/70 p-0 backdrop-blur sm:items-center sm:justify-center sm:p-6">
       <div className="w-full rounded-t-[28px] border border-slate-200 bg-white sm:max-w-2xl sm:rounded-[28px]">
         <div className="flex items-center justify-between border-b border-slate-200 px-5 py-4 sm:px-6">
           <div>
@@ -128,7 +128,7 @@ const UserFormModal = ({
 
         <form
           onSubmit={handleSubmit(onSubmit)}
-          className="grid gap-4 p-5 sm:grid-cols-2 sm:p-6"
+          className="grid gap-4 p-4 pb-[calc(env(safe-area-inset-bottom)+1rem)] sm:grid-cols-2 sm:p-6"
         >
           <label className="block text-sm text-slate-600">
             Nama
@@ -180,7 +180,7 @@ const UserFormModal = ({
             <input type="checkbox" {...register('isActive')} className="h-5 w-5" />
           </label>
 
-          <div className="flex gap-3 sm:col-span-2">
+          <div className="sticky bottom-0 -mx-4 flex flex-col gap-3 border-t border-slate-200 bg-white px-4 pt-4 sm:static sm:mx-0 sm:col-span-2 sm:flex-row sm:px-0">
             <button
               type="button"
               onClick={onClose}
@@ -240,8 +240,8 @@ const PasswordModal = ({
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/70 p-6 backdrop-blur">
-      <div className="w-full max-w-md rounded-[28px] border border-slate-200 bg-white p-6">
+    <div className="fixed inset-0 z-50 flex items-end overflow-y-auto bg-slate-950/70 p-0 backdrop-blur sm:items-center sm:justify-center sm:p-6">
+      <div className="w-full rounded-t-[28px] border border-slate-200 bg-white p-5 sm:max-w-md sm:rounded-[28px] sm:p-6">
         <h3 className="text-xl font-semibold text-slate-900">Reset Password</h3>
         <p className="mt-2 text-sm text-slate-500">
           Atur password baru untuk {user.name}.
@@ -260,7 +260,7 @@ const PasswordModal = ({
             ) : null}
           </label>
 
-          <div className="flex gap-3">
+          <div className="flex flex-col gap-3 sm:flex-row">
             <button
               type="button"
               onClick={onClose}

@@ -48,28 +48,50 @@ export const ReceiptModal = ({ isOpen, receipt, onClose }: ReceiptModalProps) =>
             </div>
 
             <div className="mt-6 overflow-hidden rounded-2xl border border-slate-200">
-              <table className="min-w-full divide-y divide-slate-200 text-sm">
-                <thead className="bg-slate-100 text-left text-slate-500">
-                  <tr>
-                    <th className="px-4 py-3">Item</th>
-                    <th className="px-4 py-3 text-center">Qty</th>
-                    <th className="px-4 py-3 text-right">Harga</th>
-                    <th className="px-4 py-3 text-right">Subtotal</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-200 bg-white">
-                  {receipt.items.map((item) => (
-                    <tr key={`${item.productId}-${item.productName}`}>
-                      <td className="px-4 py-3">{item.productName}</td>
-                      <td className="px-4 py-3 text-center">{item.quantity}</td>
-                      <td className="px-4 py-3 text-right">{formatCurrency(item.price)}</td>
-                      <td className="px-4 py-3 text-right">
+              <div className="divide-y divide-slate-200 sm:hidden">
+                {receipt.items.map((item) => (
+                  <div key={`${item.productId}-${item.productName}`} className="space-y-2 px-4 py-3 text-sm">
+                    <div className="flex items-start justify-between gap-3">
+                      <p className="min-w-0 break-words font-medium text-slate-900">
+                        {item.productName}
+                      </p>
+                      <span className="shrink-0 rounded-full bg-slate-100 px-2 py-0.5 text-xs font-semibold text-slate-700">
+                        x{item.quantity}
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between gap-3 text-xs text-slate-500">
+                      <span>{formatCurrency(item.price)}</span>
+                      <span className="text-right font-medium text-slate-900">
                         {formatCurrency(item.subtotal)}
-                      </td>
+                      </span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+              <div className="hidden sm:block overflow-x-auto">
+                <table className="min-w-full divide-y divide-slate-200 text-sm">
+                  <thead className="bg-slate-100 text-left text-slate-500">
+                    <tr>
+                      <th className="px-4 py-3">Item</th>
+                      <th className="px-4 py-3 text-center">Qty</th>
+                      <th className="px-4 py-3 text-right">Harga</th>
+                      <th className="px-4 py-3 text-right">Subtotal</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
+                  </thead>
+                  <tbody className="divide-y divide-slate-200 bg-white">
+                    {receipt.items.map((item) => (
+                      <tr key={`${item.productId}-${item.productName}`}>
+                        <td className="px-4 py-3">{item.productName}</td>
+                        <td className="px-4 py-3 text-center">{item.quantity}</td>
+                        <td className="px-4 py-3 text-right">{formatCurrency(item.price)}</td>
+                        <td className="px-4 py-3 text-right">
+                          {formatCurrency(item.subtotal)}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             </div>
 
             <div className="mt-6 space-y-2 text-sm">
@@ -129,4 +151,3 @@ export const ReceiptModal = ({ isOpen, receipt, onClose }: ReceiptModalProps) =>
     </div>
   );
 };
-

@@ -128,7 +128,7 @@ const AdjustmentModal = ({
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end bg-slate-950/70 p-0 backdrop-blur sm:items-center sm:justify-center sm:p-6">
+    <div className="fixed inset-0 z-50 flex items-end overflow-y-auto bg-slate-950/70 p-0 backdrop-blur sm:items-center sm:justify-center sm:p-6">
       <div className="w-full rounded-t-[28px] border border-slate-200 bg-white sm:max-w-2xl sm:rounded-[28px]">
         <div className="flex items-center justify-between border-b border-slate-200 px-5 py-4 sm:px-6">
           <div>
@@ -148,7 +148,7 @@ const AdjustmentModal = ({
 
         <form
           onSubmit={handleSubmit(onSubmit)}
-          className="grid gap-4 p-5 sm:grid-cols-2 sm:p-6"
+          className="grid gap-4 p-4 pb-[calc(env(safe-area-inset-bottom)+1rem)] sm:grid-cols-2 sm:p-6"
         >
           <label className="block text-sm text-slate-600 sm:col-span-2">
             Produk*
@@ -208,7 +208,7 @@ const AdjustmentModal = ({
             ) : null}
           </label>
 
-          <div className="flex gap-3 sm:col-span-2">
+          <div className="sticky bottom-0 -mx-4 flex flex-col gap-3 border-t border-slate-200 bg-white px-4 pt-4 sm:static sm:mx-0 sm:col-span-2 sm:flex-row sm:px-0">
             <button
               type="button"
               onClick={onClose}
@@ -664,12 +664,12 @@ export default function DashboardStokPage() {
               </div>
             </div>
 
-            <div className="mt-5 flex items-center justify-between">
+            <div className="mt-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
               <p className="text-sm text-slate-500">
                 Menampilkan halaman {stockLogsQuery.data?.page || 1} dari{' '}
                 {stockLogsQuery.data?.totalPages || 1}
               </p>
-              <div className="flex gap-3">
+              <div className="grid grid-cols-2 gap-3 sm:flex">
                 <button
                   type="button"
                   disabled={page <= 1}

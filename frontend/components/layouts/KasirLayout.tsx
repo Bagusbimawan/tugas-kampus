@@ -31,21 +31,21 @@ export const KasirLayout = ({ children }: KasirLayoutProps) => {
   };
 
   return (
-    <div className="min-h-screen bg-[radial-gradient(circle_at_top,_rgba(251,191,36,0.15),_transparent_35%),linear-gradient(180deg,_#0f172a_0%,_#111827_55%,_#020617_100%)] text-white">
-      <div className="flex min-h-screen">
+    <div className="min-h-screen bg-[linear-gradient(180deg,_#f6efe7_0%,_#fbf7f2_38%,_#f4ece2_100%)] text-slate-900">
+      <div className="mx-auto flex min-h-screen max-w-[1720px]">
         <aside
           className={cn(
-            'fixed inset-y-0 left-0 z-40 w-[min(18rem,calc(100vw-1rem))] overflow-y-auto border-r border-white/10 bg-slate-950/90 p-4 backdrop-blur transition-transform sm:p-6 lg:translate-x-0',
+            'fixed inset-y-0 left-0 z-40 w-[min(18rem,calc(100vw-1rem))] overflow-y-auto border-r border-[#eadfd3] bg-[#fffaf4]/95 p-4 backdrop-blur transition-transform sm:p-6 lg:translate-x-0',
             isOpen ? 'translate-x-0' : '-translate-x-full'
           )}
         >
           <div className="flex items-center gap-3">
-            <div className="rounded-2xl bg-amber-400/15 p-3 text-amber-300">
+            <div className="rounded-2xl border border-[#dccbbb] bg-[#f7ead7] p-3 text-[#9a5c18]">
               <Store className="h-6 w-6" />
             </div>
             <div>
-              <p className="text-xs uppercase tracking-[0.3em] text-amber-300">Kasir App</p>
-              <h1 className="text-lg font-semibold">Toko Gunadarma</h1>
+              <p className="text-[11px] uppercase tracking-[0.3em] text-[#9a5c18]">Kasir App</p>
+              <h1 className="text-lg font-semibold text-slate-900">Toko Gunadarma</h1>
             </div>
           </div>
 
@@ -59,10 +59,10 @@ export const KasirLayout = ({ children }: KasirLayoutProps) => {
                   key={item.href}
                   href={item.href}
                   className={cn(
-                    'flex items-center gap-3 rounded-2xl px-4 py-3 text-sm transition',
+                    'flex items-center gap-3 rounded-2xl border px-4 py-3 text-sm transition',
                     isActive
-                      ? 'bg-amber-300 text-slate-950'
-                      : 'bg-white/5 text-slate-200 hover:bg-white/10'
+                      ? 'border-[#1f6f43] bg-[#1f6f43] text-white'
+                      : 'border-transparent bg-white/70 text-slate-700 hover:border-[#dccbbb] hover:bg-white'
                   )}
                   onClick={() => setIsOpen(false)}
                 >
@@ -78,31 +78,33 @@ export const KasirLayout = ({ children }: KasirLayoutProps) => {
           <button
             type="button"
             aria-label="Tutup menu"
-            className="fixed inset-0 z-30 bg-slate-950/50 backdrop-blur-sm lg:hidden"
+            className="fixed inset-0 z-30 bg-slate-950/35 backdrop-blur-sm lg:hidden"
             onClick={() => setIsOpen(false)}
           />
         ) : null}
 
-        <div className="flex min-h-screen flex-1 flex-col lg:pl-72">
-          <header className="sticky top-0 z-30 border-b border-white/10 bg-slate-950/70 backdrop-blur">
-            <div className="flex items-center gap-3 px-4 py-3 sm:px-6 sm:py-4">
+        <div className="flex min-h-screen min-w-0 flex-1 flex-col lg:pl-72">
+          <header className="sticky top-0 z-30 border-b border-[#eadfd3] bg-[#fffaf4]/90 backdrop-blur">
+            <div className="flex items-center gap-3 px-3 py-3 sm:px-6 sm:py-4">
               <button
                 type="button"
-                className="shrink-0 rounded-xl border border-white/10 bg-white/5 p-2 lg:hidden"
+                className="shrink-0 rounded-xl border border-[#dccbbb] bg-white p-2 text-slate-700 lg:hidden"
                 onClick={() => setIsOpen((value) => !value)}
               >
                 <Menu className="h-5 w-5" />
               </button>
               <div className="min-w-0 flex-1">
-                <p className="text-xs uppercase tracking-[0.3em] text-amber-300">{pageTitle}</p>
-                <p className="hidden text-sm text-slate-300 sm:block">
+                <p className="truncate text-[11px] uppercase tracking-[0.3em] text-[#9a5c18] sm:text-xs">
+                  {pageTitle}
+                </p>
+                <p className="hidden text-sm text-slate-500 sm:block">
                   Transaksi real-time untuk kasir toko
                 </p>
               </div>
               <div className="flex shrink-0 items-center gap-2">
-                <div className="hidden rounded-2xl border border-white/10 bg-white/5 px-4 py-2 text-right sm:block">
-                  <p className="text-sm font-medium">{user?.name}</p>
-                  <p className="text-xs uppercase tracking-[0.25em] text-slate-400">
+                <div className="hidden rounded-2xl border border-[#eadfd3] bg-white/80 px-4 py-2 text-right sm:block">
+                  <p className="text-sm font-medium text-slate-900">{user?.name}</p>
+                  <p className="text-xs uppercase tracking-[0.25em] text-slate-500">
                     {getRoleLabel(user?.role)}
                   </p>
                 </div>
@@ -118,9 +120,9 @@ export const KasirLayout = ({ children }: KasirLayoutProps) => {
             </div>
           </header>
 
-          <main className="flex-1 px-4 pb-28 pt-6 sm:px-6 lg:pb-6">{children}</main>
+          <main className="flex-1 px-3 pb-28 pt-4 sm:px-6 sm:pt-6 lg:pb-6">{children}</main>
 
-          <nav className="fixed inset-x-0 bottom-0 z-30 grid grid-cols-2 border-t border-white/10 bg-slate-950/95 px-3 pb-[calc(env(safe-area-inset-bottom)+0.75rem)] pt-3 backdrop-blur lg:hidden">
+          <nav className="fixed inset-x-0 bottom-0 z-30 grid grid-cols-2 border-t border-[#eadfd3] bg-[#fffaf4]/95 px-2 pb-[calc(env(safe-area-inset-bottom)+0.75rem)] pt-2 backdrop-blur lg:hidden">
             {kasirLinks.map((item) => {
               const Icon = item.icon;
               const isActive = router.pathname === item.href;
@@ -130,8 +132,10 @@ export const KasirLayout = ({ children }: KasirLayoutProps) => {
                   key={item.href}
                   href={item.href}
                   className={cn(
-                    'mx-1 flex flex-col items-center justify-center rounded-2xl px-3 py-2 text-xs',
-                    isActive ? 'bg-amber-300 text-slate-950' : 'text-slate-300'
+                    'mx-1 flex flex-col items-center justify-center rounded-2xl border px-2 py-2 text-[11px]',
+                    isActive
+                      ? 'border-[#1f6f43] bg-[#1f6f43] text-white'
+                      : 'border-transparent text-slate-600'
                   )}
                 >
                   <Icon className="mb-1 h-4 w-4" />

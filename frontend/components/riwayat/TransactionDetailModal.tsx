@@ -67,36 +67,57 @@ export const TransactionDetailModal = ({
             </div>
 
             <div className="mt-6 overflow-hidden rounded-2xl border border-slate-200">
-              <div className="overflow-x-auto">
+              <div className="divide-y divide-slate-200 sm:hidden">
+                {transaction.items.map((item) => (
+                  <div key={item.id} className="space-y-2 px-4 py-3 text-sm">
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="min-w-0">
+                        <p className="break-words font-medium text-slate-900">{item.productName}</p>
+                        <p className="mt-1 text-xs text-slate-500">{item.product?.sku || '-'}</p>
+                      </div>
+                      <span className="shrink-0 rounded-full bg-slate-100 px-2 py-0.5 text-xs font-semibold text-slate-700">
+                        x{item.quantity}
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between gap-3 text-xs text-slate-500">
+                      <span>{formatCurrency(item.price)}</span>
+                      <span className="text-right font-medium text-slate-900">
+                        {formatCurrency(item.subtotal)}
+                      </span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+              <div className="hidden sm:block overflow-x-auto">
                 <table className="min-w-[36rem] divide-y divide-slate-200 text-sm">
-                <thead className="bg-slate-100 text-left text-slate-500">
-                  <tr>
-                    <th className="px-4 py-3">Produk</th>
-                    <th className="px-4 py-3 text-center">Qty</th>
-                    <th className="px-4 py-3 text-right">Harga</th>
-                    <th className="px-4 py-3 text-right">Subtotal</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-200 bg-white">
-                  {transaction.items.map((item) => (
-                    <tr key={item.id}>
-                      <td className="px-4 py-3">
-                        <div>
-                          <p className="font-medium text-slate-900">{item.productName}</p>
-                          <p className="mt-1 text-xs text-slate-500">{item.product?.sku || '-'}</p>
-                        </div>
-                      </td>
-                      <td className="px-4 py-3 text-center">{item.quantity}</td>
-                      <td className="px-4 py-3 text-right">{formatCurrency(item.price)}</td>
-                      <td className="px-4 py-3 text-right">{formatCurrency(item.subtotal)}</td>
+                  <thead className="bg-slate-100 text-left text-slate-500">
+                    <tr>
+                      <th className="px-4 py-3">Produk</th>
+                      <th className="px-4 py-3 text-center">Qty</th>
+                      <th className="px-4 py-3 text-right">Harga</th>
+                      <th className="px-4 py-3 text-right">Subtotal</th>
                     </tr>
-                  ))}
-                </tbody>
+                  </thead>
+                  <tbody className="divide-y divide-slate-200 bg-white">
+                    {transaction.items.map((item) => (
+                      <tr key={item.id}>
+                        <td className="px-4 py-3">
+                          <div>
+                            <p className="font-medium text-slate-900">{item.productName}</p>
+                            <p className="mt-1 text-xs text-slate-500">{item.product?.sku || '-'}</p>
+                          </div>
+                        </td>
+                        <td className="px-4 py-3 text-center">{item.quantity}</td>
+                        <td className="px-4 py-3 text-right">{formatCurrency(item.price)}</td>
+                        <td className="px-4 py-3 text-right">{formatCurrency(item.subtotal)}</td>
+                      </tr>
+                    ))}
+                  </tbody>
                 </table>
               </div>
             </div>
 
-            <div className="mt-6 grid gap-6 lg:grid-cols-[1.2fr_0.8fr]">
+            <div className="mt-6 grid gap-4 sm:gap-6 lg:grid-cols-[1.2fr_0.8fr]">
               <div className="rounded-2xl border border-slate-200 bg-white p-4">
                 <p className="text-sm font-semibold text-slate-900">Pembayaran</p>
                 <div className="mt-3 space-y-2 text-sm text-slate-600">

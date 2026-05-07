@@ -154,6 +154,9 @@ export default function DashboardPage() {
     }));
   }, [categoryRevenueQuery.data]);
 
+  const hasLineData = lineData.some((item) => item.revenueInMillion > 0 || item.transactions > 0);
+  const hasPieData = pieData.some((item) => item.totalRevenue > 0);
+
   return (
     <AuthGuard allowedRoles={['admin']}>
       <DashboardLayout>
@@ -253,6 +256,14 @@ export default function DashboardPage() {
               <div className="h-[220px] sm:h-[260px] lg:h-[320px]">
                 {salesSummaryQuery.isLoading ? (
                   <div className="h-full animate-pulse rounded-[24px] bg-slate-100" />
+                ) : salesSummaryQuery.isError ? (
+                  <div className="flex h-full items-center justify-center rounded-[24px] border border-dashed border-slate-200 bg-slate-50 px-6 text-center text-sm text-slate-500">
+                    Gagal memuat chart pendapatan.
+                  </div>
+                ) : !hasLineData ? (
+                  <div className="flex h-full items-center justify-center rounded-[24px] border border-dashed border-slate-200 bg-slate-50 px-6 text-center text-sm text-slate-500">
+                    Belum ada transaksi pada periode ini.
+                  </div>
                 ) : (
                   <ResponsiveContainer width="100%" height="100%">
                     <LineChart data={lineData} margin={{ top: 5, right: 10, left: 5, bottom: 5 }}>
@@ -288,6 +299,14 @@ export default function DashboardPage() {
               <div className="h-[220px] sm:h-[260px] lg:h-[320px]">
                 {categoryRevenueQuery.isLoading ? (
                   <div className="h-full animate-pulse rounded-[24px] bg-slate-100" />
+                ) : categoryRevenueQuery.isError ? (
+                  <div className="flex h-full items-center justify-center rounded-[24px] border border-dashed border-slate-200 bg-slate-50 px-6 text-center text-sm text-slate-500">
+                    Gagal memuat chart kategori.
+                  </div>
+                ) : !hasPieData ? (
+                  <div className="flex h-full items-center justify-center rounded-[24px] border border-dashed border-slate-200 bg-slate-50 px-6 text-center text-sm text-slate-500">
+                    Belum ada distribusi pendapatan kategori pada periode ini.
+                  </div>
                 ) : (
                   <ResponsiveContainer width="100%" height="100%">
                     <PieChart>
@@ -310,7 +329,7 @@ export default function DashboardPage() {
               </div>
 
               <div className="mt-4 space-y-2">
-                {pieData.map((item) => (
+                {pieData.filter((item) => item.totalRevenue > 0).map((item) => (
                   <div
                     key={item.categoryId}
                     className="flex items-center justify-between rounded-2xl bg-slate-50 px-4 py-3 text-sm"

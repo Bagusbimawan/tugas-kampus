@@ -129,7 +129,7 @@ export const DashboardLayout = ({ children }: DashboardLayoutProps) => {
 
         <div className="flex min-h-screen flex-1 flex-col lg:pl-80">
           <header className="sticky top-0 z-30 border-b border-slate-200/80 bg-white/80 backdrop-blur">
-            <div className="flex flex-col gap-4 px-4 py-4 sm:px-6 lg:flex-row lg:items-center lg:justify-between">
+            <div className="flex flex-col gap-3 px-3 py-4 sm:px-6 lg:flex-row lg:items-center lg:justify-between">
               <div className="flex items-start gap-3 sm:items-center">
                 <button
                   type="button"
@@ -148,7 +148,7 @@ export const DashboardLayout = ({ children }: DashboardLayoutProps) => {
                 </div>
               </div>
 
-              <div className="flex items-center gap-3 lg:justify-end">
+              <div className="flex items-center gap-2 sm:gap-3 lg:justify-end">
                 <div className="hidden sm:block rounded-2xl border border-slate-200 bg-white px-4 py-2 text-right">
                   <p className="text-sm font-medium text-slate-900">{user?.name}</p>
                   <p className="text-xs uppercase tracking-[0.25em] text-slate-500">
@@ -167,7 +167,7 @@ export const DashboardLayout = ({ children }: DashboardLayoutProps) => {
             </div>
           </header>
 
-          <main className="flex-1 px-4 py-6 pb-[calc(env(safe-area-inset-bottom)+1.5rem)] sm:px-6">
+          <main className="flex-1 px-3 py-5 pb-[calc(env(safe-area-inset-bottom)+1.5rem)] sm:px-6 sm:py-6">
             {children}
           </main>
         </div>
