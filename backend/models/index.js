@@ -14,16 +14,45 @@ function getBackendRoot() {
   return path.resolve(__dirname, '..');
 }
 
-const backendRoot = getBackendRoot();
-const env = process.env.NODE_ENV || 'development';
+function loadDatabaseConfig(envName) {
+  const backendRoot = getBackendRoot();
 
-[path.join(backendRoot, '.env'), path.join(backendRoot, '.env.production')].forEach((envFile) => {
-  require('dotenv').config({ path: envFile });
-});
+  [path.join(backendRoot, '.env.production'), path.join(backendRoot, '.env')].forEach((envFile) => {
+    require('dotenv').config({ path: envFile });
+  });
+
+  try {
+    const configModule = require(path.join(backendRoot, 'config', 'config.js'));
+    const config = configModule[envName];
+
+    if (config) {
+      return config;
+    }
+  } catch (error) {
+    console.warn('config/config.js tidak ditemukan, memakai environment variable DB_*');
+  }
+
+  const resolvedHost =
+    !process.env.DB_HOST || process.env.DB_HOST === 'mysql'
+      ? '127.0.0.1'
+      : process.env.DB_HOST;
+
+  return {
+    database: process.env.DB_NAME || 'kasir_db',
+    username: process.env.DB_USER || 'kasir_user',
+    password: process.env.DB_PASSWORD || '',
+    host: resolvedHost,
+    port: Number(process.env.DB_PORT || 3306),
+    dialect: 'mysql',
+    define: {
+      underscored: true
+    }
+  };
+}
 
 const basename = path.basename(__filename);
-const configPath = path.join(backendRoot, 'config', 'config.json');
-const config = require(configPath)[env];
+const env = process.env.NODE_ENV || 'development';
+const config = loadDatabaseConfig(env);
 const db = {};
 const resolvedHost =
   !process.env.DB_HOST || process.env.DB_HOST === 'mysql'

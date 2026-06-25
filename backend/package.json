@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "ts-node-dev --respawn --transpile-only src/server.ts",
     "build": "tsc -p tsconfig.json && npm run copy:runtime-assets",
-    "copy:runtime-assets": "mkdir -p dist/config && cp config/config.json dist/config/config.json && cp -R models dist/ && cp -R migrations dist/ && cp -R seeders dist/",
+    "copy:runtime-assets": "mkdir -p dist/config && cp config/config.js config/config.json dist/config/ && cp -R models dist/ && cp -R migrations dist/ && cp -R seeders dist/",
     "start": "node dist/src/server.js",
     "migrate": "sequelize-cli db:migrate --config config/config.js",
     "migrate:undo": "sequelize-cli db:migrate:undo --config config/config.js",

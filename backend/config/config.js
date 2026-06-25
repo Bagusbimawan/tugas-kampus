@@ -3,7 +3,8 @@
 const path = require('path');
 const dotenv = require('dotenv');
 
-dotenv.config({ path: path.resolve(__dirname, '..', '..', '.env') });
+dotenv.config({ path: path.resolve(__dirname, '..', '.env.production') });
+dotenv.config({ path: path.resolve(__dirname, '..', '.env') });
 
 const resolvedHost =
   !process.env.DB_HOST || process.env.DB_HOST === 'mysql'
