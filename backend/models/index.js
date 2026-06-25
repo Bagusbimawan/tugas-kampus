@@ -3,11 +3,26 @@
 const fs = require('fs');
 const path = require('path');
 const Sequelize = require('sequelize');
-require('dotenv').config({ path: path.resolve(__dirname, '..', '..', '.env') });
+
+function getBackendRoot() {
+  const parentDir = path.basename(path.dirname(__dirname));
+
+  if (parentDir === 'dist') {
+    return path.resolve(__dirname, '..', '..');
+  }
+
+  return path.resolve(__dirname, '..');
+}
+
+const backendRoot = getBackendRoot();
+const env = process.env.NODE_ENV || 'development';
+
+[path.join(backendRoot, '.env'), path.join(backendRoot, '.env.production')].forEach((envFile) => {
+  require('dotenv').config({ path: envFile });
+});
 
 const basename = path.basename(__filename);
-const env = process.env.NODE_ENV || 'development';
-const configPath = path.resolve(__dirname, '..', 'config', 'config.json');
+const configPath = path.join(backendRoot, 'config', 'config.json');
 const config = require(configPath)[env];
 const db = {};
 const resolvedHost =
