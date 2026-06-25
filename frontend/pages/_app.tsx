@@ -7,6 +7,7 @@ import { Toaster } from 'react-hot-toast';
 
 import { createQueryClient } from '../lib/query-client';
 import { setUnauthorizedHandler } from '../services/api';
+import { SettingsHydrator } from '../components/SettingsHydrator';
 import '../styles/globals.css';
 
 export default function App({ Component, pageProps }: AppProps) {
@@ -29,6 +30,7 @@ export default function App({ Component, pageProps }: AppProps) {
         <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
       </Head>
       <Component {...pageProps} />
+      <SettingsHydrator />
       <Toaster
         position="top-right"
         toastOptions={{

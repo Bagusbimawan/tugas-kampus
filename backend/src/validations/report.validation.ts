@@ -1,6 +1,7 @@
 import Joi from 'joi';
 
 import { ApiError } from '../utils/api-error';
+import { assertValidDateRange } from '../utils/validate-date-range';
 
 export interface ReportQueryInput {
   startDate?: string;
@@ -30,6 +31,8 @@ export const validateReportQuery = (
   if (error) {
     throw new ApiError(400, error.details[0]?.message || 'Query laporan tidak valid');
   }
+
+  assertValidDateRange(value.startDate, value.endDate);
 
   return value;
 };

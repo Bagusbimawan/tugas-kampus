@@ -7,11 +7,11 @@
     "backend"
   ],
   "scripts": {
-    "dev:frontend": "npm run dev --workspace frontend",
-    "dev:backend": "npm run dev --workspace backend",
-    "build:frontend": "npm run build --workspace frontend",
-    "start:frontend": "npm run start --workspace frontend",
-    "start:backend": "npm run start --workspace backend"
+    "dev:frontend": "bun run --filter frontend dev",
+    "dev:backend": "bun run --filter backend dev",
+    "build:frontend": "bun run --filter frontend build",
+    "start:frontend": "bun run --filter frontend start",
+    "start:backend": "bun run --filter backend start"
   }
 }
 

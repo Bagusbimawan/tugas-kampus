@@ -71,7 +71,12 @@ export const useCartStore = create<CartState>((set, get) => ({
           }
 
           const nextQty = Math.max(0, Math.min(quantity, item.stock));
-          return { ...item, quantity: nextQty };
+          const maxDiscount = item.price * nextQty;
+          return {
+            ...item,
+            quantity: nextQty,
+            discount: Math.min(item.discount, maxDiscount)
+          };
         })
         .filter((item) => item.quantity > 0)
     }));
@@ -86,9 +91,14 @@ export const useCartStore = create<CartState>((set, get) => ({
   },
   setDiscount: (productId, discount) => {
     set((state) => ({
-      items: state.items.map((item) =>
-        item.productId === productId ? { ...item, discount: Math.max(0, discount) } : item
-      )
+      items: state.items.map((item) => {
+        if (item.productId !== productId) {
+          return item;
+        }
+
+        const maxDiscount = item.price * item.quantity;
+        return { ...item, discount: Math.min(Math.max(0, discount), maxDiscount) };
+      })
     }));
   },
   getSubtotal: () => {

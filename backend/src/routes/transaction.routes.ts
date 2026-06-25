@@ -13,7 +13,7 @@ router.get('/:id', asyncHandler(transactionController.getById));
 router.post('/', asyncHandler(transactionController.create));
 router.put(
   '/:id/cancel',
-  roleMiddleware(['admin', 'manager']),
+  roleMiddleware(['admin']),
   asyncHandler(transactionController.cancel)
 );
 router.get('/:id/receipt', asyncHandler(transactionController.getReceipt));

@@ -6,7 +6,7 @@ export interface UserInput {
   name: string;
   email: string;
   password?: string;
-  role: 'admin' | 'manager' | 'kasir';
+  role: 'admin' | 'kasir';
   isActive?: boolean;
 }
 
@@ -18,7 +18,7 @@ const userSchema = Joi.object<UserInput>({
   name: Joi.string().trim().required(),
   email: Joi.string().email().required(),
   password: Joi.string().min(6).optional(),
-  role: Joi.string().valid('admin', 'manager', 'kasir').required(),
+  role: Joi.string().valid('admin', 'kasir').required(),
   isActive: Joi.boolean().default(true)
 });
 

@@ -35,6 +35,12 @@ export const ReceiptModal = ({ isOpen, receipt, onClose }: ReceiptModalProps) =>
           <div className="rounded-[28px] border border-dashed border-slate-300 bg-slate-50 p-5 print:border-0 print:bg-white print:p-0">
             <div className="text-center">
               <h4 className="text-xl font-semibold">{receipt.store.name}</h4>
+              {receipt.store.address ? (
+                <p className="mt-1 text-sm text-slate-500">{receipt.store.address}</p>
+              ) : null}
+              {receipt.store.phone ? (
+                <p className="mt-1 text-sm text-slate-500">Telp: {receipt.store.phone}</p>
+              ) : null}
               <p className="mt-1 text-sm text-slate-500">Sistem Informasi Kasir</p>
             </div>
 

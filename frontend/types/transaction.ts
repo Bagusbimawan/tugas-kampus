@@ -69,6 +69,8 @@ export interface ReceiptItem {
 export interface ReceiptResponse {
   store: {
     name: string;
+    address?: string;
+    phone?: string;
   };
   invoiceNumber: string;
   createdAt: string;

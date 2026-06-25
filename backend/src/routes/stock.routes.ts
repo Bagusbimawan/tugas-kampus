@@ -5,9 +5,8 @@ import { authMiddleware, roleMiddleware } from '../middlewares/auth';
 import { asyncHandler } from '../utils/async-handler';
 
 const router = Router();
-const managerRoles = ['admin', 'manager'];
 
-router.use(authMiddleware, roleMiddleware(managerRoles));
+router.use(authMiddleware, roleMiddleware(['admin']));
 
 router.get('/logs', asyncHandler(stockController.getLogs));
 router.get('/logs/:productId', asyncHandler(stockController.getLogsByProductId));

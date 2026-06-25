@@ -1,6 +1,7 @@
 import Joi from 'joi';
 
 import { ApiError } from '../utils/api-error';
+import { assertValidDateRange } from '../utils/validate-date-range';
 
 export interface StockAdjustmentInput {
   productId: number;
@@ -81,6 +82,8 @@ export const validateStockLogQuery = (
   if (error) {
     throw new ApiError(400, error.details[0]?.message || 'Query stok tidak valid');
   }
+
+  assertValidDateRange(value.startDate, value.endDate);
 
   return value;
 };

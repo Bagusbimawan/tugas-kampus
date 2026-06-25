@@ -1,4 +1,5 @@
 import { zodResolver } from '@hookform/resolvers/zod';
+import axios from 'axios';
 import { Save } from 'lucide-react';
 import { useEffect } from 'react';
 import { useForm } from 'react-hook-form';
@@ -7,19 +8,33 @@ import { z } from 'zod';
 
 import { AuthGuard } from '../../components/AuthGuard';
 import { DashboardLayout } from '../../components/layouts/DashboardLayout';
+import { getStorePhoneError } from '../../lib/validation';
 import { useSettingsStore } from '../../store/useSettingsStore';
 
 const settingsSchema = z.object({
-  storeName: z.string().min(1, 'Nama toko wajib diisi'),
-  storeAddress: z.string().min(1, 'Alamat toko wajib diisi'),
-  storePhone: z.string().min(1, 'Nomor telepon wajib diisi'),
+  storeName: z.string().trim().min(1, 'Nama toko wajib diisi').max(255, 'Nama toko terlalu panjang'),
+  storeAddress: z
+    .string()
+    .trim()
+    .min(1, 'Alamat toko wajib diisi')
+    .max(1000, 'Alamat terlalu panjang'),
+  storePhone: z
+    .string()
+    .trim()
+    .superRefine((value, ctx) => {
+      const error = getStorePhoneError(value);
+
+      if (error) {
+        ctx.addIssue({ code: z.ZodIssueCode.custom, message: error });
+      }
+    }),
   taxRate: z.coerce.number().min(0, 'Pajak minimal 0').max(100, 'Pajak maksimal 100')
 });
 
 type SettingsFormValues = z.infer<typeof settingsSchema>;
 
 export default function DashboardPengaturanPage() {
-  const { settings, updateSettings } = useSettingsStore();
+  const { settings, saveSettings, isSaving } = useSettingsStore();
   const {
     register,
     reset,
@@ -35,8 +50,17 @@ export default function DashboardPengaturanPage() {
   }, [reset, settings]);
 
   const onSubmit = async (values: SettingsFormValues) => {
-    updateSettings(values);
-    toast.success('Pengaturan toko disimpan');
+    try {
+      await saveSettings(values);
+      toast.success('Pengaturan toko disimpan');
+    } catch (error) {
+      if (axios.isAxiosError(error)) {
+        toast.error(error.response?.data?.message || 'Gagal menyimpan pengaturan');
+        return;
+      }
+
+      toast.error('Terjadi kesalahan saat menyimpan pengaturan');
+    }
   };
 
   return (
@@ -47,8 +71,8 @@ export default function DashboardPengaturanPage() {
             <p className="text-xs uppercase tracking-[0.35em] text-amber-600">Pengaturan</p>
             <h1 className="mt-2 text-2xl font-semibold text-slate-900">Identitas toko</h1>
             <p className="mt-2 max-w-2xl text-sm text-slate-500">
-              Pengaturan ini disimpan lokal di browser dan dipakai sebagai baseline nama
-              toko serta default pajak di halaman kasir dan dashboard.
+              Pengaturan ini disimpan di server dan dipakai oleh semua user untuk nama toko,
+              struk, serta perhitungan pajak di kasir.
             </p>
           </section>
 
@@ -69,6 +93,7 @@ export default function DashboardPengaturanPage() {
                 Nomor Telepon
                 <input
                   {...register('storePhone')}
+                  placeholder="0211234567 atau 081234567890"
                   className="mt-2 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 outline-none"
                 />
                 {errors.storePhone ? (
@@ -94,6 +119,7 @@ export default function DashboardPengaturanPage() {
                   type="number"
                   min={0}
                   max={100}
+                  step={0.01}
                   {...register('taxRate')}
                   className="mt-2 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 outline-none"
                 />
@@ -105,20 +131,19 @@ export default function DashboardPengaturanPage() {
               <div className="rounded-[24px] border border-dashed border-slate-300 bg-slate-50 p-4 text-sm text-slate-600">
                 <p className="font-semibold text-slate-900">Catatan</p>
                 <p className="mt-2">
-                  Jika nanti Anda ingin pengaturan ini tersimpan di server dan terbaca oleh
-                  semua user, tahap berikutnya adalah menambahkan model dan API
-                  `store_settings` di backend.
+                  Perubahan pajak langsung memengaruhi transaksi baru di kasir. Struk transaksi
+                  juga menampilkan nama, alamat, dan telepon toko dari pengaturan ini.
                 </p>
               </div>
 
               <div className="sm:col-span-2">
                 <button
                   type="submit"
-                  disabled={isSubmitting}
+                  disabled={isSubmitting || isSaving}
                   className="inline-flex items-center gap-2 rounded-2xl bg-slate-950 px-5 py-3 text-sm font-semibold text-white disabled:opacity-60"
                 >
                   <Save className="h-4 w-4" />
-                  Simpan Pengaturan
+                  {isSaving ? 'Menyimpan...' : 'Simpan Pengaturan'}
                 </button>
               </div>
             </form>

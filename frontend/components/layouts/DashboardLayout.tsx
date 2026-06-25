@@ -29,15 +29,15 @@ const sections = [
   {
     title: 'Operasional',
     items: [
-      { href: '/dashboard/produk', label: 'Produk', icon: Boxes, roles: ['admin', 'manager'] },
-      { href: '/dashboard/stok', label: 'Stok', icon: Shield, roles: ['admin', 'manager'] },
+      { href: '/dashboard/produk', label: 'Produk', icon: Boxes, roles: ['admin'] },
+      { href: '/dashboard/stok', label: 'Stok', icon: Shield, roles: ['admin'] },
       {
         href: '/dashboard/riwayat',
         label: 'Riwayat',
         icon: ReceiptText,
-        roles: ['admin', 'manager']
+        roles: ['admin']
       },
-      { href: '/dashboard/laporan', label: 'Laporan', icon: BarChart3, roles: ['admin', 'manager'] }
+      { href: '/dashboard/laporan', label: 'Laporan', icon: BarChart3, roles: ['admin'] }
     ]
   },
   {
@@ -78,9 +78,7 @@ export const DashboardLayout = ({ children }: DashboardLayoutProps) => {
             <p className="text-xs uppercase tracking-[0.35em] text-amber-300">Dashboard</p>
             <h1 className="mt-2 text-xl font-semibold">Sistem Informasi Kasir</h1>
             <p className="mt-2 text-sm text-slate-300">
-              {user?.role === 'manager'
-                ? 'Akses Anda difokuskan untuk memantau produk, stok, transaksi, dan laporan dalam mode baca.'
-                : 'Kelola produk, stok, laporan, dan akun pengguna dalam satu panel.'}
+              Kelola produk, stok, laporan, dan akun pengguna dalam satu panel admin.
             </p>
           </div>
 

@@ -3,7 +3,7 @@ import 'express';
 export interface JwtUserPayload {
   id: number;
   email: string;
-  role: 'admin' | 'manager' | 'kasir';
+  role: 'admin' | 'kasir';
 }
 
 declare global {

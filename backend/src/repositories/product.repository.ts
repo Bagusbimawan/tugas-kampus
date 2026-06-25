@@ -1,4 +1,4 @@
-import { FindOptions, Op } from 'sequelize';
+import { FindOptions, Op, Sequelize } from 'sequelize';
 
 const { Category, Product } = require('../../models');
 
@@ -77,6 +77,23 @@ export const productRepository = {
     }
 
     return Product.findOne({ where });
+  },
+
+  findByName(name: string, excludedId?: number) {
+    const normalizedName = name.trim().toLowerCase();
+    const conditions: unknown[] = [
+      Sequelize.where(Sequelize.fn('LOWER', Sequelize.col('name')), normalizedName)
+    ];
+
+    if (excludedId) {
+      conditions.push({ id: { [Op.ne]: excludedId } });
+    }
+
+    return Product.findOne({
+      where: {
+        [Op.and]: conditions
+      }
+    });
   },
 
   create(payload: Record<string, unknown>, transaction?: unknown) {

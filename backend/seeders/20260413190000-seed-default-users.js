@@ -20,15 +20,6 @@ module.exports = {
         updated_at: now
       },
       {
-        name: 'Manager Toko',
-        email: 'manager@toko.com',
-        password,
-        role: 'manager',
-        is_active: true,
-        created_at: now,
-        updated_at: now
-      },
-      {
         name: 'Kasir Toko',
         email: 'kasir@toko.com',
         password,
@@ -42,7 +33,7 @@ module.exports = {
 
   async down(queryInterface) {
     await queryInterface.bulkDelete('users', {
-      email: ['admin@toko.com', 'manager@toko.com', 'kasir@toko.com']
+      email: ['admin@toko.com', 'kasir@toko.com']
     });
   }
 };

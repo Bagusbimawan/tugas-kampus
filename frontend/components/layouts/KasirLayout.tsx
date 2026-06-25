@@ -5,10 +5,12 @@ import { ReactNode, useMemo, useState } from 'react';
 
 import { cn } from '../../lib/cn';
 import { getRoleLabel } from '../../lib/role';
+import { useSettingsStore } from '../../store/useSettingsStore';
 import { useAuthStore } from '../../store/useAuthStore';
 
 interface KasirLayoutProps {
   children: ReactNode;
+  mobileDock?: ReactNode;
 }
 
 const kasirLinks = [
@@ -16,9 +18,10 @@ const kasirLinks = [
   { href: '/kasir/riwayat', label: 'Riwayat', icon: ReceiptText }
 ];
 
-export const KasirLayout = ({ children }: KasirLayoutProps) => {
+export const KasirLayout = ({ children, mobileDock }: KasirLayoutProps) => {
   const router = useRouter();
   const { user, logout } = useAuthStore();
+  const { settings } = useSettingsStore();
   const [isOpen, setIsOpen] = useState(false);
 
   const pageTitle = useMemo(() => {
@@ -45,7 +48,7 @@ export const KasirLayout = ({ children }: KasirLayoutProps) => {
             </div>
             <div>
               <p className="text-[11px] uppercase tracking-[0.3em] text-[#9a5c18]">Kasir App</p>
-              <h1 className="text-lg font-semibold text-slate-900">Toko Gunadarma</h1>
+              <h1 className="text-lg font-semibold text-slate-900">{settings.storeName}</h1>
             </div>
           </div>
 
@@ -120,9 +123,24 @@ export const KasirLayout = ({ children }: KasirLayoutProps) => {
             </div>
           </header>
 
-          <main className="flex-1 px-3 pb-28 pt-4 sm:px-6 sm:pt-6 lg:pb-6">{children}</main>
+          <main
+            className={cn(
+              'flex-1 px-2 pt-2 sm:px-6 sm:pt-4 lg:pb-6',
+              mobileDock
+                ? 'pb-[calc(env(safe-area-inset-bottom)+8.5rem)] lg:pb-6'
+                : 'pb-[calc(env(safe-area-inset-bottom)+4.75rem)] sm:pb-6'
+            )}
+          >
+            {children}
+          </main>
 
-          <nav className="fixed inset-x-0 bottom-0 z-30 grid grid-cols-2 border-t border-[#eadfd3] bg-[#fffaf4]/95 px-2 pb-[calc(env(safe-area-inset-bottom)+0.75rem)] pt-2 backdrop-blur lg:hidden">
+          <div className="fixed inset-x-0 bottom-0 z-40 lg:hidden">
+            {mobileDock ? (
+              <div className="border-t border-[#eadfd3] bg-[#fffaf4]/98 px-2 pb-1 pt-2 backdrop-blur">
+                {mobileDock}
+              </div>
+            ) : null}
+            <nav className="grid grid-cols-2 border-t border-[#eadfd3] bg-[#fffaf4]/95 px-2 pb-[calc(env(safe-area-inset-bottom)+0.5rem)] pt-1.5 backdrop-blur">
             {kasirLinks.map((item) => {
               const Icon = item.icon;
               const isActive = router.pathname === item.href;
@@ -143,7 +161,8 @@ export const KasirLayout = ({ children }: KasirLayoutProps) => {
                 </Link>
               );
             })}
-          </nav>
+            </nav>
+          </div>
         </div>
       </div>
     </div>

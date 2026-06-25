@@ -1,8 +1,13 @@
+import { Request } from 'express';
 import bcrypt from 'bcryptjs';
 import jwt, { SignOptions } from 'jsonwebtoken';
 
 import { env } from '../config/env';
 import { AUTH_INVALID_CREDENTIALS } from '../constants/messages';
+import {
+  clearLoginAttempts,
+  recordFailedLoginAttempt
+} from '../middlewares/login-rate-limit';
 import { authRepository } from '../repositories/auth.repository';
 import { JwtUserPayload } from '../types/express';
 import { ApiError } from '../utils/api-error';
@@ -11,7 +16,7 @@ import { LoginInput } from '../validations/auth.validation';
 const buildTokenPayload = (user: {
   id: number;
   email: string;
-  role: 'admin' | 'manager' | 'kasir';
+  role: 'admin' | 'kasir';
 }): JwtUserPayload => {
   return {
     id: user.id,
@@ -29,17 +34,27 @@ const signToken = (payload: JwtUserPayload) => {
 };
 
 export const authService = {
-  async login(payload: LoginInput) {
+  async login(payload: LoginInput, req?: Request) {
     const user = await authRepository.findByEmail(payload.email);
 
     if (!user || !user.isActive) {
+      if (req) {
+        recordFailedLoginAttempt(req);
+      }
       throw new ApiError(401, AUTH_INVALID_CREDENTIALS);
     }
 
     const isPasswordValid = await bcrypt.compare(payload.password, user.password);
 
     if (!isPasswordValid) {
+      if (req) {
+        recordFailedLoginAttempt(req);
+      }
       throw new ApiError(401, AUTH_INVALID_CREDENTIALS);
+    }
+
+    if (req) {
+      clearLoginAttempts(req);
     }
 
     const token = signToken(buildTokenPayload(user));

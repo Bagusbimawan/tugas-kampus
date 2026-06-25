@@ -10,39 +10,94 @@ import {
   X
 } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
-import { useForm } from 'react-hook-form';
+import Link from 'next/link';
+import { Controller, useForm } from 'react-hook-form';
 import toast from 'react-hot-toast';
 import { z } from 'zod';
 
 import { AuthGuard } from '../../components/AuthGuard';
+import { CurrencyInput } from '../../components/common/CurrencyInput';
+import { QuantityStepper } from '../../components/common/QuantityStepper';
 import { DashboardLayout } from '../../components/layouts/DashboardLayout';
 import { useDebouncedValue } from '../../hooks/useDebouncedValue';
-import { formatCurrency } from '../../lib/format';
+import { formatCurrency, MAX_CURRENCY_AMOUNT } from '../../lib/format';
+import { cn } from '../../lib/cn';
+import { getDateRangeError, validateProductImageFile } from '../../lib/validation';
 import { api } from '../../services/api';
-import { useAuthStore } from '../../store/useAuthStore';
 import { Category, Product, ProductListResponse } from '../../types/product';
 
-const productSchema = z.object({
-  name: z.string().min(1, 'Nama produk wajib diisi'),
-  categoryId: z.coerce.number().min(1, 'Kategori wajib dipilih'),
-  sku: z.string().optional(),
-  price: z.coerce.number().positive('Harga jual harus lebih besar dari 0'),
-  costPrice: z.union([z.coerce.number().min(0), z.nan()]).optional(),
-  stock: z.coerce.number().int().min(0, 'Stok tidak boleh negatif'),
-  minStock: z.coerce.number().int().min(0, 'Stok minimum tidak boleh negatif'),
-  unit: z.string().min(1, 'Satuan wajib diisi'),
-  isActive: z.boolean()
-});
+const productSchema = z
+  .object({
+    name: z.string().trim().min(1, 'Nama produk wajib diisi').max(255, 'Nama produk terlalu panjang'),
+    categoryId: z.coerce.number().min(1, 'Kategori wajib dipilih'),
+    sku: z.string().optional(),
+    price: z.coerce
+      .number()
+      .positive('Harga jual harus lebih besar dari 0')
+      .max(MAX_CURRENCY_AMOUNT, `Harga jual maksimal ${formatCurrency(MAX_CURRENCY_AMOUNT)}`),
+    costPrice: z
+      .union([
+        z.coerce
+          .number()
+          .min(0)
+          .max(MAX_CURRENCY_AMOUNT, `Harga modal maksimal ${formatCurrency(MAX_CURRENCY_AMOUNT)}`),
+        z.nan()
+      ])
+      .optional(),
+    stock: z.coerce.number().int().min(0, 'Stok tidak boleh negatif'),
+    minStock: z.coerce.number().int().min(0, 'Stok minimum tidak boleh negatif'),
+    unit: z.string().min(1, 'Satuan wajib diisi'),
+    isActive: z.boolean()
+  })
+  .superRefine((values, context) => {
+    if (!isSellingPriceBelowCost(values.price, values.costPrice)) {
+      return;
+    }
+
+    context.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: PRICE_VS_COST_MESSAGE,
+      path: ['price']
+    });
+    context.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: PRICE_VS_COST_MESSAGE,
+      path: ['costPrice']
+    });
+  });
 
 const categorySchema = z.object({
-  name: z.string().min(1, 'Nama kategori wajib diisi'),
-  description: z.string().optional()
+  name: z.string().trim().min(1, 'Nama kategori wajib diisi').max(255, 'Nama kategori terlalu panjang'),
+  description: z.string().trim().max(500, 'Deskripsi terlalu panjang').optional()
 });
 
 type ProductFormValues = z.infer<typeof productSchema>;
 type CategoryFormValues = z.infer<typeof categorySchema>;
 
 type ProductStatusFilter = 'all' | 'active' | 'inactive';
+
+const PRICE_VS_COST_MESSAGE = 'Harga jual tidak boleh lebih rendah dari harga modal';
+
+function getEffectiveCostPrice(value: unknown): number | null {
+  const cost = Number(value);
+
+  if (!Number.isFinite(cost) || Number.isNaN(cost) || cost <= 0) {
+    return null;
+  }
+
+  return cost;
+}
+
+function isSellingPriceBelowCost(price: unknown, costPrice: unknown): boolean {
+  const cost = getEffectiveCostPrice(costPrice);
+  const sellingPrice = Number(price);
+
+  if (cost === null || !Number.isFinite(sellingPrice) || sellingPrice <= 0) {
+    return false;
+  }
+
+  return sellingPrice < cost;
+}
 
 const emptyProductValues: ProductFormValues = {
   name: '',
@@ -62,6 +117,20 @@ const getErrorMessage = (error: unknown, fallback: string) => {
   }
 
   return fallback;
+};
+
+const getNameErrorMessage = (error: unknown) => {
+  if (!axios.isAxiosError(error)) {
+    return null;
+  }
+
+  const message = error.response?.data?.message;
+
+  if (typeof message === 'string' && message.toLowerCase().includes('nama produk')) {
+    return message;
+  }
+
+  return null;
 };
 
 const getSkuErrorMessage = (error: unknown) => {
@@ -107,26 +176,6 @@ const getSkuErrorMessage = (error: unknown) => {
   return null;
 };
 
-const formatRupiahInput = (value: number | string | undefined) => {
-  const numericValue = Number(value);
-
-  if (!Number.isFinite(numericValue) || numericValue <= 0) {
-    return '';
-  }
-
-  return new Intl.NumberFormat('id-ID').format(numericValue);
-};
-
-const parseRupiahInput = (value: string) => {
-  const digitsOnly = value.replace(/\D/g, '');
-
-  if (!digitsOnly) {
-    return '';
-  }
-
-  return Number(digitsOnly);
-};
-
 const toAbsoluteImageUrl = (value?: string | null) => {
   if (!value) {
     return null;
@@ -168,24 +217,117 @@ const ProductFormModal = ({
     reset,
     handleSubmit,
     setValue,
+    setError,
+    clearErrors,
+    trigger,
     watch,
+    control,
     formState: { errors }
   } = useForm<ProductFormValues>({
     resolver: zodResolver(productSchema),
-    defaultValues: emptyProductValues
+    defaultValues: emptyProductValues,
+    mode: 'onChange',
+    reValidateMode: 'onChange'
   });
+  const watchedName = watch('name');
   const watchedPrice = watch('price');
   const watchedCostPrice = watch('costPrice');
-  const [priceInput, setPriceInput] = useState('');
-  const [costPriceInput, setCostPriceInput] = useState('');
+  const watchedStock = watch('stock');
+  const watchedMinStock = watch('minStock');
+  const watchedIsActive = watch('isActive');
+  const isEditing = Boolean(initialProduct);
+  const effectiveCostPrice = getEffectiveCostPrice(watchedCostPrice);
+  const isPriceBelowCost = isSellingPriceBelowCost(watchedPrice, watchedCostPrice);
+  const priceFieldError = isPriceBelowCost
+    ? PRICE_VS_COST_MESSAGE
+    : errors.price?.message;
+  const costPriceFieldError = isPriceBelowCost
+    ? PRICE_VS_COST_MESSAGE
+    : errors.costPrice?.message;
+  const debouncedName = useDebouncedValue(watchedName, 300);
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreviewUrl, setImagePreviewUrl] = useState('');
+  const [imageError, setImageError] = useState<string | null>(null);
+
+  const nameCheckQuery = useQuery({
+    queryKey: ['product-name-check', debouncedName.trim().toLowerCase(), initialProduct?.id],
+    queryFn: async () => {
+      const { data } = await api.get<ProductListResponse>('/products', {
+        params: { q: debouncedName.trim(), limit: 50 }
+      });
+      return data.data;
+    },
+    enabled: isOpen && debouncedName.trim().length > 0
+  });
+
+  const syncPriceValidation = () => {
+    void trigger(['price', 'costPrice']);
+  };
+
+  useEffect(() => {
+    if (!isOpen) {
+      return;
+    }
+
+    const normalizedName = debouncedName.trim().toLowerCase();
+
+    if (!normalizedName) {
+      if (errors.name?.type === 'manual') {
+        clearErrors('name');
+      }
+      return;
+    }
+
+    if (nameCheckQuery.isFetching) {
+      return;
+    }
+
+    const duplicate = nameCheckQuery.data?.find(
+      (product) =>
+        product.name.trim().toLowerCase() === normalizedName &&
+        product.id !== initialProduct?.id
+    );
+
+    if (duplicate) {
+      setError('name', {
+        type: 'manual',
+        message: duplicate.isActive
+          ? 'Nama produk sudah digunakan oleh produk aktif'
+          : 'Nama produk sudah digunakan oleh produk nonaktif'
+      });
+      return;
+    }
+
+    if (errors.name?.type === 'manual') {
+      clearErrors('name');
+      void trigger('name');
+    }
+  }, [
+    clearErrors,
+    debouncedName,
+    errors.name?.type,
+    initialProduct?.id,
+    isOpen,
+    nameCheckQuery.data,
+    nameCheckQuery.isFetching,
+    setError,
+    trigger
+  ]);
+
+  useEffect(() => {
+    if (!isOpen) {
+      return;
+    }
+
+    void trigger(['price', 'costPrice']);
+  }, [isOpen, trigger, watchedCostPrice, watchedPrice]);
 
   useEffect(() => {
     if (!isOpen) {
       reset(emptyProductValues);
       setImageFile(null);
       setImagePreviewUrl('');
+      setImageError(null);
       return;
     }
 
@@ -193,6 +335,7 @@ const ProductFormModal = ({
       reset(emptyProductValues);
       setImageFile(null);
       setImagePreviewUrl('');
+      setImageError(null);
       return;
     }
 
@@ -215,14 +358,6 @@ const ProductFormModal = ({
   }, [initialProduct, isOpen, reset]);
 
   useEffect(() => {
-    setPriceInput(formatRupiahInput(watchedPrice));
-  }, [watchedPrice]);
-
-  useEffect(() => {
-    setCostPriceInput(formatRupiahInput(watchedCostPrice));
-  }, [watchedCostPrice]);
-
-  useEffect(() => {
     if (!imageFile) {
       return;
     }
@@ -240,9 +375,15 @@ const ProductFormModal = ({
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end overflow-y-auto bg-slate-950/70 p-0 backdrop-blur sm:items-center sm:justify-center sm:p-6">
-      <div className="flex max-h-[100dvh] w-full flex-col overflow-hidden rounded-t-[28px] border border-slate-200 bg-white sm:max-h-[min(90dvh,56rem)] sm:max-w-3xl sm:rounded-[28px]">
-        <div className="flex items-start justify-between gap-4 border-b border-slate-200 px-4 py-4 sm:px-6">
+    <div className="fixed inset-0 z-50 flex flex-col justify-end sm:items-center sm:justify-center sm:p-6">
+      <button
+        type="button"
+        aria-label="Tutup modal produk"
+        className="absolute inset-0 bg-slate-950/70 backdrop-blur"
+        onClick={onClose}
+      />
+      <div className="relative flex h-[92dvh] max-h-[92dvh] w-full flex-col overflow-hidden rounded-t-[28px] border border-slate-200 bg-white sm:h-auto sm:max-h-[min(90dvh,56rem)] sm:max-w-3xl sm:rounded-[28px]">
+        <div className="flex shrink-0 items-start justify-between gap-4 border-b border-slate-200 px-4 py-4 sm:px-6">
           <div>
             <p className="text-xs uppercase tracking-[0.35em] text-amber-600">
               {initialProduct ? 'Edit Produk' : 'Tambah Produk'}
@@ -261,9 +402,11 @@ const ProductFormModal = ({
         </div>
 
         <form
+          key={initialProduct?.id ?? 'new-product'}
           onSubmit={handleSubmit(async (values) => onSubmit(values, imageFile))}
-          className="grid flex-1 gap-4 overflow-y-auto p-4 pb-[calc(env(safe-area-inset-bottom)+1rem)] sm:grid-cols-2 sm:p-6"
+          className="flex min-h-0 flex-1 flex-col overflow-hidden"
         >
+          <div className="grid min-h-0 flex-1 gap-4 overflow-y-auto overscroll-contain touch-pan-y p-4 sm:grid-cols-2 sm:p-6 [-webkit-overflow-scrolling:touch]">
           <label className="block text-sm text-slate-600">
             Nama Produk*
             <input
@@ -271,6 +414,9 @@ const ProductFormModal = ({
               className="mt-2 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 outline-none"
             />
             {errors.name ? <p className="mt-2 text-rose-600">{errors.name.message}</p> : null}
+            {nameCheckQuery.isFetching && debouncedName.trim() ? (
+              <p className="mt-2 text-xs text-slate-500">Memeriksa ketersediaan nama...</p>
+            ) : null}
           </label>
 
           <label className="block text-sm text-slate-600">
@@ -297,66 +443,129 @@ const ProductFormModal = ({
               {...register('sku')}
               className="mt-2 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 outline-none"
             />
-            {submitError ? <p className="mt-2 text-rose-600">{submitError}</p> : null}
+            {submitError && !errors.name && !errors.sku ? (
+              <p className="mt-2 text-rose-600">{submitError}</p>
+            ) : null}
           </label>
 
-          <label className="block text-sm text-slate-600">
-            Harga Jual*
-            <input
-              inputMode="numeric"
-              value={priceInput}
-              onChange={(event) => {
-                const parsedValue = parseRupiahInput(event.target.value);
-                setPriceInput(formatRupiahInput(parsedValue));
-                setValue('price', parsedValue === '' ? 0 : parsedValue, {
-                  shouldDirty: true,
-                  shouldValidate: true
-                });
-              }}
-              placeholder="Rp 0"
-              className="mt-2 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 outline-none"
-            />
-            {errors.price ? <p className="mt-2 text-rose-600">{errors.price.message}</p> : null}
-          </label>
+          <div className="block text-sm text-slate-600">
+            <span>Harga Jual*</span>
+            <div className="mt-2">
+              <CurrencyInput
+                value={Number.isFinite(watchedPrice) ? watchedPrice : 0}
+                onChange={(next) => {
+                  setValue('price', next, { shouldDirty: true, shouldValidate: true });
+                  syncPriceValidation();
+                }}
+                maxAmount={MAX_CURRENCY_AMOUNT}
+                inputClassName={cn(
+                  'bg-slate-50',
+                  isPriceBelowCost && 'border-rose-400 bg-rose-50 focus:border-rose-500'
+                )}
+              />
+            </div>
+            {priceFieldError ? (
+              <p className="mt-2 text-sm text-rose-600" role="alert">
+                {priceFieldError}
+              </p>
+            ) : null}
+            {!isPriceBelowCost ? (
+              <p className="mt-1 text-xs text-slate-500">
+                Maks. {formatCurrency(MAX_CURRENCY_AMOUNT)}
+              </p>
+            ) : null}
+          </div>
 
-          <label className="block text-sm text-slate-600">
-            Harga Modal
-            <input
-              inputMode="numeric"
-              value={costPriceInput}
-              onChange={(event) => {
-                const parsedValue = parseRupiahInput(event.target.value);
-                setCostPriceInput(formatRupiahInput(parsedValue));
-                setValue('costPrice', parsedValue === '' ? Number.NaN : parsedValue, {
-                  shouldDirty: true,
-                  shouldValidate: true
-                });
-              }}
-              placeholder="Rp 0"
-              className="mt-2 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 outline-none"
-            />
-          </label>
+          <div className="block text-sm text-slate-600">
+            <span>Harga Modal</span>
+            <div className="mt-2">
+              <CurrencyInput
+                value={
+                  Number.isFinite(watchedCostPrice) && (watchedCostPrice as number) > 0
+                    ? (watchedCostPrice as number)
+                    : 0
+                }
+                onChange={(next) => {
+                  setValue('costPrice', next === 0 ? Number.NaN : next, {
+                    shouldDirty: true,
+                    shouldValidate: true
+                  });
+                  syncPriceValidation();
+                }}
+                maxAmount={MAX_CURRENCY_AMOUNT}
+                inputClassName={cn(
+                  'bg-slate-50',
+                  isPriceBelowCost && 'border-rose-400 bg-rose-50 focus:border-rose-500'
+                )}
+              />
+            </div>
+            <p className="mt-2 text-xs text-slate-500">Opsional. Kosongkan jika belum diisi.</p>
+            {costPriceFieldError ? (
+              <p className="mt-2 text-sm text-rose-600" role="alert">
+                {costPriceFieldError}
+              </p>
+            ) : null}
+          </div>
 
-          <label className="block text-sm text-slate-600">
-            Stok*
-            <input
-              type="number"
-              min={0}
-              {...register('stock')}
-              className="mt-2 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 outline-none"
-            />
+          {isPriceBelowCost && effectiveCostPrice !== null ? (
+            <div
+              className="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 sm:col-span-2"
+              role="alert"
+            >
+              <p className="text-sm font-medium text-rose-700">{PRICE_VS_COST_MESSAGE}</p>
+              <p className="mt-1 text-sm text-rose-600">
+                Harga modal {formatCurrency(effectiveCostPrice)} — naikkan harga jual atau turunkan
+                harga modal sebelum menyimpan.
+              </p>
+            </div>
+          ) : null}
+
+          <div className="block text-sm text-slate-600">
+            <span>Stok{isEditing ? '' : '*'}</span>
+            {isEditing ? (
+              <div className="mt-2 rounded-2xl border border-slate-200 bg-slate-100 px-4 py-3">
+                <p className="font-medium text-slate-900">
+                  {Number.isFinite(watchedStock) ? watchedStock : 0}
+                </p>
+                <p className="mt-2 text-xs text-slate-500">
+                  Stok tidak bisa diubah dari sini. Gunakan{' '}
+                  <Link href="/dashboard/stok" className="font-medium text-amber-700 underline">
+                    Penyesuaian Stok
+                  </Link>{' '}
+                  untuk menambah atau mengurangi stok.
+                </p>
+              </div>
+            ) : (
+              <div className="mt-2">
+                <QuantityStepper
+                  value={Number.isFinite(watchedStock) ? watchedStock : 0}
+                  onChange={(next) =>
+                    setValue('stock', next, { shouldDirty: true, shouldValidate: true })
+                  }
+                  min={0}
+                  ariaLabel="Stok produk"
+                />
+              </div>
+            )}
             {errors.stock ? <p className="mt-2 text-rose-600">{errors.stock.message}</p> : null}
-          </label>
+          </div>
 
-          <label className="block text-sm text-slate-600">
-            Stok Minimum
-            <input
-              type="number"
-              min={0}
-              {...register('minStock')}
-              className="mt-2 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 outline-none"
-            />
-          </label>
+          <div className="block text-sm text-slate-600">
+            <span>Stok Minimum</span>
+            <div className="mt-2">
+              <QuantityStepper
+                value={Number.isFinite(watchedMinStock) ? watchedMinStock : 0}
+                onChange={(next) =>
+                  setValue('minStock', next, { shouldDirty: true, shouldValidate: true })
+                }
+                min={0}
+                ariaLabel="Stok minimum"
+              />
+            </div>
+            <p className="mt-2 text-xs text-slate-500">
+              Notifikasi stok menipis muncul saat stok di bawah nilai ini.
+            </p>
+          </div>
 
           <label className="block text-sm text-slate-600">
             Satuan
@@ -375,9 +584,30 @@ const ProductFormModal = ({
             <input
               type="file"
               accept="image/png,image/jpeg,image/webp"
-              onChange={(event) => setImageFile(event.target.files?.[0] || null)}
+              onChange={(event) => {
+                const file = event.target.files?.[0] || null;
+
+                if (!file) {
+                  setImageFile(null);
+                  setImageError(null);
+                  return;
+                }
+
+                const validationMessage = validateProductImageFile(file);
+
+                if (validationMessage) {
+                  setImageFile(null);
+                  setImageError(validationMessage);
+                  event.target.value = '';
+                  return;
+                }
+
+                setImageError(null);
+                setImageFile(file);
+              }}
               className="mt-4 block w-full text-sm text-slate-600 file:mr-4 file:rounded-2xl file:border-0 file:bg-slate-950 file:px-4 file:py-3 file:font-semibold file:text-white"
             />
+            {imageError ? <p className="mt-2 text-sm text-rose-600">{imageError}</p> : null}
             {imagePreviewUrl ? (
               <div className="mt-4 overflow-hidden rounded-2xl border border-slate-200 bg-white">
                 <div className="flex flex-col gap-4 p-4 sm:flex-row sm:items-center">
@@ -401,17 +631,37 @@ const ProductFormModal = ({
             ) : null}
           </div>
 
-          <label className="flex flex-col gap-3 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4 sm:col-span-2 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex flex-col gap-3 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4 sm:col-span-2 sm:flex-row sm:items-center sm:justify-between">
             <div>
               <p className="text-sm font-medium text-slate-900">Status aktif</p>
               <p className="mt-1 text-sm text-slate-500">
-                Produk nonaktif tidak akan tampil di POS.
+                {watchedIsActive
+                  ? 'Produk tampil di POS dan dapat dijual.'
+                  : 'Produk nonaktif tidak akan tampil di POS.'}
               </p>
             </div>
-            <input type="checkbox" {...register('isActive')} className="h-5 w-5" />
-          </label>
+            <Controller
+              name="isActive"
+              control={control}
+              render={({ field: { value, onChange, onBlur, name, ref } }) => (
+                <label className="inline-flex items-center gap-3 text-sm font-medium text-slate-700">
+                  <input
+                    type="checkbox"
+                    name={name}
+                    ref={ref}
+                    onBlur={onBlur}
+                    checked={Boolean(value)}
+                    onChange={(event) => onChange(event.target.checked)}
+                    className="h-5 w-5 rounded border-slate-300"
+                  />
+                  {value ? 'Aktif' : 'Nonaktif'}
+                </label>
+              )}
+            />
+          </div>
+          </div>
 
-          <div className="sticky bottom-0 -mx-4 flex flex-col gap-3 border-t border-slate-200 bg-white px-4 pt-4 sm:static sm:mx-0 sm:col-span-2 sm:flex-row sm:px-0">
+          <div className="flex shrink-0 flex-col gap-3 border-t border-slate-200 bg-white px-4 py-4 pb-[calc(env(safe-area-inset-bottom)+1rem)] sm:flex-row sm:px-6">
             <button
               type="button"
               onClick={onClose}
@@ -421,8 +671,8 @@ const ProductFormModal = ({
             </button>
             <button
               type="submit"
-              disabled={isSubmitting}
-              className="flex-1 rounded-2xl bg-slate-950 px-4 py-3 text-sm font-semibold text-white disabled:opacity-60"
+              disabled={isSubmitting || isPriceBelowCost}
+              className="flex-1 rounded-2xl bg-slate-950 px-4 py-3 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:opacity-60"
             >
               {isSubmitting ? 'Menyimpan...' : initialProduct ? 'Simpan Perubahan' : 'Tambah Produk'}
             </button>
@@ -484,7 +734,6 @@ const ConfirmDialog = ({
 };
 
 export default function DashboardProdukPage() {
-  const { user } = useAuthStore();
   const queryClient = useQueryClient();
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState('');
@@ -558,6 +807,8 @@ export default function DashboardProdukPage() {
     }) => {
       const payload = {
         ...values,
+        name: values.name.trim(),
+        isActive: Boolean(values.isActive),
         sku: values.sku?.trim() || undefined,
         costPrice: Number.isNaN(values.costPrice) ? undefined : values.costPrice
       };
@@ -595,6 +846,14 @@ export default function DashboardProdukPage() {
       await invalidateCatalog();
     },
     onError: (error) => {
+      const nameErrorMessage = getNameErrorMessage(error);
+
+      if (nameErrorMessage) {
+        setProductFormError(nameErrorMessage);
+        toast.error(nameErrorMessage);
+        return;
+      }
+
       const skuErrorMessage = getSkuErrorMessage(error);
 
       if (skuErrorMessage) {
@@ -680,40 +939,35 @@ export default function DashboardProdukPage() {
   };
 
   const productRows = productsQuery.data?.data || [];
-  const isManagerView = user?.role === 'manager';
 
   return (
-    <AuthGuard allowedRoles={['admin', 'manager']}>
+    <AuthGuard allowedRoles={['admin']}>
       <DashboardLayout>
         <div className="space-y-6">
           <section className="rounded-[28px] border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
-            <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+            <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-end">
               <div>
                 <p className="text-xs uppercase tracking-[0.35em] text-amber-600">Produk</p>
                 <h1 className="mt-2 text-2xl font-semibold text-slate-900">
-                  {isManagerView ? 'Katalog produk' : 'Manajemen produk dan kategori'}
+                  Manajemen produk dan kategori
                 </h1>
                 <p className="mt-2 text-sm text-slate-500">
-                  {isManagerView
-                    ? 'Lihat daftar produk, harga, gambar, dan status stok dalam mode baca.'
-                    : 'Kelola katalog produk untuk POS dan dashboard operasional.'}
+                  Kelola katalog produk untuk POS dan dashboard operasional.
                 </p>
               </div>
 
-              {!isManagerView ? (
-                <button
-                  type="button"
-                  onClick={() => {
-                    setProductFormError(null);
-                    setSelectedProduct(null);
-                    setIsProductModalOpen(true);
-                  }}
-                  className="inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-slate-950 px-5 py-3 text-sm font-semibold text-white sm:w-auto"
-                >
-                  <Plus className="h-4 w-4" />
-                  Tambah Produk
-                </button>
-              ) : null}
+              <button
+                type="button"
+                onClick={() => {
+                  setProductFormError(null);
+                  setSelectedProduct(null);
+                  setIsProductModalOpen(true);
+                }}
+                className="inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-slate-950 px-5 py-3 text-sm font-semibold text-white sm:w-auto"
+              >
+                <Plus className="h-4 w-4" />
+                Tambah Produk
+              </button>
             </div>
 
             <div className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-[1.4fr_0.9fr_0.8fr]">
@@ -756,8 +1010,8 @@ export default function DashboardProdukPage() {
             </div>
 
             <div className="mt-6 overflow-hidden rounded-[24px] border border-slate-200">
-              {/* Mobile card view */}
-              <div className="md:hidden divide-y divide-slate-200">
+              {/* Mobile & tablet card view */}
+              <div className="lg:hidden divide-y divide-slate-200">
                 {productsQuery.isLoading
                   ? Array.from({ length: 6 }).map((_, index) => (
                       <div key={index} className="px-4 py-4">
@@ -776,7 +1030,7 @@ export default function DashboardProdukPage() {
                           <div className="h-12 w-12 shrink-0 rounded-2xl bg-slate-100" />
                         )}
                         <div className="min-w-0 flex-1">
-                          <p className="truncate font-medium text-slate-900">{product.name}</p>
+                          <p className="line-clamp-2 font-medium text-slate-900">{product.name}</p>
                           <p className="mt-0.5 text-xs text-slate-500">
                             {product.category?.name || '-'} · {formatCurrency(product.price)}
                           </p>
@@ -799,10 +1053,11 @@ export default function DashboardProdukPage() {
                             </span>
                           </div>
                         </div>
-                        {!isManagerView ? (
-                          <div className="flex shrink-0 flex-col gap-2 min-[360px]:flex-row">
+                        <div className="flex shrink-0 flex-col gap-2 min-[360px]:flex-row">
                             <button
                               type="button"
+                              aria-label={`Edit ${product.name}`}
+                              title="Edit produk"
                               onClick={() => {
                                 setProductFormError(null);
                                 setSelectedProduct(product);
@@ -814,18 +1069,19 @@ export default function DashboardProdukPage() {
                             </button>
                             <button
                               type="button"
+                              aria-label={`Nonaktifkan ${product.name}`}
+                              title="Nonaktifkan produk"
                               onClick={() => setProductToDisable(product)}
                               className="rounded-xl border border-slate-200 p-2 text-rose-600 transition hover:bg-rose-50"
                             >
                               <Trash2 className="h-4 w-4" />
                             </button>
                           </div>
-                        ) : null}
                       </div>
                     ))}
               </div>
               {/* Desktop table view */}
-              <div className="hidden md:block overflow-x-auto">
+              <div className="hidden lg:block overflow-x-auto">
                 <table className="min-w-full divide-y divide-slate-200 text-sm">
                   <thead className="bg-slate-50 text-left text-slate-500">
                     <tr>
@@ -836,14 +1092,14 @@ export default function DashboardProdukPage() {
                       <th className="px-4 py-4">Harga Jual</th>
                       <th className="px-4 py-4">Stok</th>
                       <th className="px-4 py-4">Status</th>
-                      {!isManagerView ? <th className="px-4 py-4 text-right">Aksi</th> : null}
+                      <th className="px-4 py-4 text-right">Aksi</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-200 bg-white">
                     {productsQuery.isLoading
                       ? Array.from({ length: 6 }).map((_, index) => (
                           <tr key={index}>
-                            <td className="px-4 py-4" colSpan={isManagerView ? 7 : 8}>
+                            <td className="px-4 py-4" colSpan={8}>
                               <div className="h-10 animate-pulse rounded-2xl bg-slate-100" />
                             </td>
                           </tr>
@@ -891,11 +1147,12 @@ export default function DashboardProdukPage() {
                                 {product.isActive ? 'Aktif' : 'Nonaktif'}
                               </span>
                             </td>
-                            {!isManagerView ? (
-                              <td className="px-4 py-4">
-                                <div className="flex justify-end gap-2">
+                            <td className="px-4 py-4">
+                              <div className="flex justify-end gap-2">
                                   <button
                                     type="button"
+                                    aria-label={`Edit ${product.name}`}
+                                    title="Edit produk"
                                     onClick={() => {
                                       setProductFormError(null);
                                       setSelectedProduct(product);
@@ -907,6 +1164,8 @@ export default function DashboardProdukPage() {
                                   </button>
                                   <button
                                     type="button"
+                                    aria-label={`Nonaktifkan ${product.name}`}
+                                    title="Nonaktifkan produk"
                                     onClick={() => setProductToDisable(product)}
                                     className="rounded-xl border border-slate-200 p-2 text-rose-600 transition hover:bg-rose-50"
                                   >
@@ -914,7 +1173,6 @@ export default function DashboardProdukPage() {
                                   </button>
                                 </div>
                               </td>
-                            ) : null}
                           </tr>
                         ))}
                   </tbody>
@@ -948,8 +1206,7 @@ export default function DashboardProdukPage() {
             </div>
           </section>
 
-          {!isManagerView ? (
-            <section className="rounded-[28px] border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
+          <section className="rounded-[28px] border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
               <button
                 type="button"
                 onClick={() => setIsCategoryOpen((value) => !value)}
@@ -1090,19 +1347,17 @@ export default function DashboardProdukPage() {
                         onClick={() => createCategoryMutation.mutate(newCategory)}
                         className="rounded-2xl bg-amber-400 px-4 py-3 text-sm font-semibold text-slate-950"
                       >
-                        Save
+                        Simpan
                       </button>
                     </div>
                   </div>
                 </div>
               ) : null}
             </section>
-          ) : null}
         </div>
 
-        {!isManagerView ? (
-          <>
-            <ProductFormModal
+        <>
+          <ProductFormModal
               categories={categoriesQuery.data || []}
               initialProduct={selectedProduct}
               isOpen={isProductModalOpen}
@@ -1129,8 +1384,7 @@ export default function DashboardProdukPage() {
                 await disableProductMutation.mutateAsync();
               }}
             />
-          </>
-        ) : null}
+        </>
       </DashboardLayout>
     </AuthGuard>
   );

@@ -35,6 +35,7 @@ app.get('/api', (_req, res) => {
       '/api/stock',
       '/api/transactions',
       '/api/reports',
+      '/api/settings',
       '/api/users'
     ]
   });

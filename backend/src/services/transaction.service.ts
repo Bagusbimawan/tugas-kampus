@@ -1,4 +1,5 @@
 import { transactionRepository } from '../repositories/transaction.repository';
+import { settingsService } from './settings.service';
 import { ApiError } from '../utils/api-error';
 import {
   CreateTransactionInput,
@@ -72,8 +73,13 @@ export const transactionService = {
             throw new Error(`Stok tidak cukup: ${product.name}`);
           }
 
-          const itemDiscount = item.discount || 0;
-          const itemSubtotal = Number(product.price) * item.quantity - itemDiscount;
+          const lineGross = Number(product.price) * item.quantity;
+          const itemDiscount = Math.min(Math.max(0, item.discount || 0), lineGross);
+          const itemSubtotal = lineGross - itemDiscount;
+
+          if (itemSubtotal < 0) {
+            throw new Error(`Diskon item melebihi subtotal: ${product.name}`);
+          }
 
           processedItems.push({
             product,
@@ -85,11 +91,17 @@ export const transactionService = {
         }
 
         const subtotal = processedItems.reduce((sum, item) => sum + item.itemSubtotal, 0);
-        const discount = payload.discount || 0;
-        const tax = payload.tax || 0;
-        const total = subtotal - discount + tax;
+        const discount = Math.min(Math.max(0, payload.discount || 0), subtotal);
+        const taxableAmount = Math.max(0, subtotal - discount);
+        const taxRate = await settingsService.getTaxRate();
+        const tax = Math.round(taxableAmount * taxRate);
+        const total = Math.max(0, subtotal - discount + tax);
 
-        if (payload.payment.method === 'cash' && payload.payment.amountPaid < total) {
+        if (total <= 0) {
+          throw new Error('Total transaksi tidak valid');
+        }
+
+        if (payload.payment.amountPaid < total) {
           throw new Error('Nominal pembayaran kurang');
         }
 
@@ -247,9 +259,13 @@ export const transactionService = {
       throw new ApiError(404, 'Transaksi tidak ditemukan');
     }
 
+    const storeSettings = await settingsService.getSettings();
+
     return {
       store: {
-        name: 'Toko Kasir'
+        name: storeSettings.storeName,
+        address: storeSettings.storeAddress,
+        phone: storeSettings.storePhone
       },
       invoiceNumber: transaction.invoiceNumber,
       createdAt: transaction.createdAt,

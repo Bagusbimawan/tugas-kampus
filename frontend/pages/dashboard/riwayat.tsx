@@ -1,12 +1,14 @@
 import { useQuery } from '@tanstack/react-query';
 import { CalendarRange, ReceiptText, Search } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
+import toast from 'react-hot-toast';
 
 import { AuthGuard } from '../../components/AuthGuard';
 import { SummaryCard } from '../../components/dashboard/SummaryCard';
 import { DashboardLayout } from '../../components/layouts/DashboardLayout';
 import { TransactionDetailModal } from '../../components/riwayat/TransactionDetailModal';
 import { formatCurrency } from '../../lib/format';
+import { getDateRangeError } from '../../lib/validation';
 import { api } from '../../services/api';
 import {
   TransactionDetailResponse,
@@ -104,7 +106,7 @@ export default function DashboardRiwayatPage() {
   }, [filteredTransactions]);
 
   return (
-    <AuthGuard allowedRoles={['admin', 'manager']}>
+    <AuthGuard allowedRoles={['admin']}>
       <DashboardLayout>
         <div className="space-y-6">
           <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
@@ -129,7 +131,7 @@ export default function DashboardRiwayatPage() {
           </section>
 
           <section className="rounded-[28px] border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
-            <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+            <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-end">
               <div>
                 <p className="text-xs uppercase tracking-[0.35em] text-amber-600">
                   Transaksi
@@ -142,7 +144,7 @@ export default function DashboardRiwayatPage() {
                 </p>
               </div>
 
-              <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+              <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-[1fr_1fr_auto]">
                 <input
                   type="date"
                   value={draftRange.startDate}
@@ -150,6 +152,7 @@ export default function DashboardRiwayatPage() {
                     setDraftRange((current) => ({ ...current, startDate: event.target.value }))
                   }
                   className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 outline-none"
+                  aria-label="Tanggal mulai"
                 />
                 <input
                   type="date"
@@ -158,18 +161,26 @@ export default function DashboardRiwayatPage() {
                     setDraftRange((current) => ({ ...current, endDate: event.target.value }))
                   }
                   className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 outline-none"
+                  aria-label="Tanggal akhir"
                 />
                 <button
                   type="button"
-                  onClick={() => setRange({ ...draftRange })}
+                  onClick={() => {
+                    const error = getDateRangeError(draftRange.startDate, draftRange.endDate);
+                    if (error) {
+                      toast.error(error);
+                      return;
+                    }
+                    setRange({ ...draftRange });
+                  }}
                   className="rounded-2xl bg-slate-950 px-4 py-3 text-sm font-semibold text-white sm:col-span-2 lg:col-span-1"
                 >
-                  Apply
+                  Terapkan
                 </button>
               </div>
             </div>
 
-            <div className="relative mt-6 max-w-md">
+            <div className="relative mt-6">
               <Search className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
               <input
                 value={search}

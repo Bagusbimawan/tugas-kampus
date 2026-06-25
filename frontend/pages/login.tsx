@@ -13,7 +13,7 @@ import { useAuthStore } from '../store/useAuthStore';
 import { LoginResponse } from '../types/auth';
 
 const loginSchema = z.object({
-  email: z.string().email('Email tidak valid'),
+  email: z.string().trim().min(1, 'Email wajib diisi').email('Email tidak valid'),
   password: z.string().min(6, 'Password minimal 6 karakter')
 });
 
@@ -87,7 +87,7 @@ export default function LoginPage() {
               Sistem informasi kasir untuk operasional toko yang cepat dan rapi.
             </h1>
             <p className="mt-6 text-lg text-slate-300">
-              Login sebagai kasir, admin, atau manager untuk mengakses transaksi,
+              Login sebagai kasir atau admin untuk mengakses transaksi,
               manajemen stok, serta laporan penjualan.
             </p>
 

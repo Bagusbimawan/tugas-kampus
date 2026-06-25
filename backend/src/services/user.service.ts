@@ -37,6 +37,22 @@ export const userService = {
       throw new ApiError(404, 'User tidak ditemukan');
     }
 
+    if (user.role === 'admin' && payload.isActive === false) {
+      const activeAdminCount = await userRepository.countActiveAdmins(id);
+
+      if (activeAdminCount === 0) {
+        throw new ApiError(400, 'Minimal harus ada satu admin aktif');
+      }
+    }
+
+    if (user.role === 'admin' && payload.role !== 'admin') {
+      const activeAdminCount = await userRepository.countActiveAdmins(id);
+
+      if (activeAdminCount === 0) {
+        throw new ApiError(400, 'Minimal harus ada satu admin aktif');
+      }
+    }
+
     await ensureEmailUnique(payload.email, id);
     await userRepository.update(user, {
       name: payload.name,
@@ -66,6 +82,14 @@ export const userService = {
 
     if (!user) {
       throw new ApiError(404, 'User tidak ditemukan');
+    }
+
+    if (user.role === 'admin' && user.isActive) {
+      const activeAdminCount = await userRepository.countActiveAdmins(id);
+
+      if (activeAdminCount === 0) {
+        throw new ApiError(400, 'Minimal harus ada satu admin aktif');
+      }
     }
 
     await userRepository.update(user, { isActive: false });

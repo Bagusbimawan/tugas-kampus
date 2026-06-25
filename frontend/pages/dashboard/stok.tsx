@@ -8,12 +8,13 @@ import toast from 'react-hot-toast';
 import { z } from 'zod';
 
 import { AuthGuard } from '../../components/AuthGuard';
+import { PositiveQuantityInput } from '../../components/common/PositiveQuantityInput';
 import { SummaryCard } from '../../components/dashboard/SummaryCard';
 import { DashboardLayout } from '../../components/layouts/DashboardLayout';
 import { useDebouncedValue } from '../../hooks/useDebouncedValue';
 import { formatCurrency } from '../../lib/format';
+import { getDateRangeError } from '../../lib/validation';
 import { api } from '../../services/api';
-import { useAuthStore } from '../../store/useAuthStore';
 import { Product, ProductListResponse } from '../../types/product';
 
 interface StockLogItem {
@@ -44,14 +45,27 @@ interface StockLogResponse {
   totalPages: number;
 }
 
-const adjustmentSchema = z.object({
+const adjustmentFormSchema = z.object({
   productId: z.coerce.number().min(1, 'Produk wajib dipilih'),
   type: z.enum(['in', 'adjustment']),
-  qtyChange: z.coerce.number().int(),
+  direction: z.enum(['add', 'reduce']),
+  quantity: z.coerce.number().int().min(1, 'Jumlah minimal 1'),
   reason: z.string().min(1, 'Alasan wajib diisi')
 });
 
-type AdjustmentFormValues = z.infer<typeof adjustmentSchema>;
+type AdjustmentFormValues = z.infer<typeof adjustmentFormSchema>;
+
+const toAdjustmentPayload = (values: AdjustmentFormValues) => {
+  const qtyChange =
+    values.type === 'in' || values.direction === 'add' ? values.quantity : -values.quantity;
+
+  return {
+    productId: values.productId,
+    type: values.type,
+    qtyChange,
+    reason: values.reason
+  };
+};
 
 const getLocalDateInput = (date: Date) => {
   const year = date.getFullYear();
@@ -69,6 +83,16 @@ const getDefaultLogRange = () => {
     startDate: getLocalDateInput(start),
     endDate: getLocalDateInput(end)
   };
+};
+
+const getLogTypeLabel = (type: StockLogItem['type']) => {
+  if (type === 'in') {
+    return 'Masuk';
+  }
+  if (type === 'out') {
+    return 'Keluar';
+  }
+  return 'Penyesuaian';
 };
 
 const getErrorMessage = (error: unknown, fallback: string) => {
@@ -94,30 +118,70 @@ const AdjustmentModal = ({
   onClose,
   onSubmit
 }: AdjustmentModalProps) => {
+  const activeProducts = useMemo(
+    () => products.filter((product) => product.isActive),
+    [products]
+  );
+
   const {
     register,
     reset,
     handleSubmit,
     watch,
+    setValue,
     formState: { errors }
   } = useForm<AdjustmentFormValues>({
-    resolver: zodResolver(adjustmentSchema),
+    resolver: zodResolver(adjustmentFormSchema),
     defaultValues: {
       productId: 0,
       type: 'in',
-      qtyChange: 1,
+      direction: 'add',
+      quantity: 1,
       reason: ''
     }
   });
 
   const adjustmentType = watch('type');
+  const direction = watch('direction');
+  const quantity = watch('quantity');
+  const rawProductId = watch('productId');
+  const selectedProductId = Number(rawProductId) || 0;
+
+  const selectedProduct =
+    selectedProductId > 0
+      ? activeProducts.find((product) => product.id === selectedProductId)
+      : undefined;
+  const hasSelectedProduct = Boolean(selectedProduct);
+  const maxReduceQty = selectedProduct ? Number(selectedProduct.stock) : 0;
+  const isReduceMode = adjustmentType === 'adjustment' && direction === 'reduce';
+  const quantityMax = isReduceMode && selectedProduct ? maxReduceQty : undefined;
+
+  const projectedStock = selectedProduct
+    ? selectedProduct.stock +
+      (adjustmentType === 'in' || direction === 'add' ? quantity : -quantity)
+    : null;
+
+  useEffect(() => {
+    if (adjustmentType === 'in') {
+      setValue('direction', 'add', { shouldValidate: true });
+    }
+  }, [adjustmentType, setValue]);
+
+  useEffect(() => {
+    if (quantity < 1) {
+      setValue('quantity', 1, { shouldValidate: true });
+    } else if (quantityMax !== undefined && quantity > quantityMax) {
+      setValue('quantity', Math.max(1, quantityMax), { shouldValidate: true });
+    }
+  }, [quantity, quantityMax, setValue]);
 
   useEffect(() => {
     if (!isOpen) {
       reset({
         productId: 0,
         type: 'in',
-        qtyChange: 1,
+        direction: 'add',
+        quantity: 1,
         reason: ''
       });
     }
@@ -127,101 +191,237 @@ const AdjustmentModal = ({
     return null;
   }
 
+  const handleFormSubmit = handleSubmit(async (values) => {
+    if (
+      values.type === 'adjustment' &&
+      values.direction === 'reduce' &&
+      selectedProduct &&
+      values.quantity > selectedProduct.stock
+    ) {
+      toast.error(`Pengurangan maksimal ${selectedProduct.stock} unit`);
+      return;
+    }
+
+    await onSubmit(values);
+  });
+
   return (
-    <div className="fixed inset-0 z-50 flex items-end overflow-y-auto bg-slate-950/70 p-0 backdrop-blur sm:items-center sm:justify-center sm:p-6">
-      <div className="w-full rounded-t-[28px] border border-slate-200 bg-white sm:max-w-2xl sm:rounded-[28px]">
-        <div className="flex items-center justify-between border-b border-slate-200 px-5 py-4 sm:px-6">
-          <div>
-            <p className="text-xs uppercase tracking-[0.35em] text-amber-600">Adjustment</p>
-            <h3 className="mt-1 text-xl font-semibold text-slate-900">
+    <div className="fixed inset-0 z-50 flex items-end justify-center bg-slate-950/70 p-0 backdrop-blur sm:items-center sm:p-4 md:p-6">
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="adjustment-modal-title"
+        className="flex max-h-[min(100dvh,100%)] w-full max-w-2xl flex-col overflow-hidden rounded-t-[28px] border border-slate-200 bg-white shadow-2xl sm:max-h-[90dvh] sm:rounded-[28px]"
+      >
+        <div className="flex shrink-0 items-start justify-between gap-3 border-b border-slate-200 px-4 py-4 sm:px-6">
+          <div className="min-w-0 pr-2">
+            <p className="text-[10px] uppercase tracking-[0.28em] text-amber-600 sm:text-xs sm:tracking-[0.35em]">
+              Penyesuaian
+            </p>
+            <h3
+              id="adjustment-modal-title"
+              className="mt-1 text-lg font-semibold leading-snug text-slate-900 sm:text-xl"
+            >
               Penyesuaian stok produk
             </h3>
           </div>
           <button
             type="button"
             onClick={onClose}
-            className="rounded-2xl border border-slate-200 p-2 text-slate-500"
+            aria-label="Tutup"
+            className="shrink-0 rounded-2xl border border-slate-200 p-2 text-slate-500"
           >
             <X className="h-5 w-5" />
           </button>
         </div>
 
         <form
-          onSubmit={handleSubmit(onSubmit)}
-          className="grid gap-4 p-4 pb-[calc(env(safe-area-inset-bottom)+1rem)] sm:grid-cols-2 sm:p-6"
+          onSubmit={(event) => event.preventDefault()}
+          className="flex min-h-0 flex-1 flex-col"
         >
-          <label className="block text-sm text-slate-600 sm:col-span-2">
-            Produk*
-            <select
-              {...register('productId')}
-              className="mt-2 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 outline-none"
-            >
-              <option value={0}>Pilih produk</option>
-              {products.map((product) => (
-                <option key={product.id} value={product.id}>
-                  {product.name} ({product.stock})
-                </option>
-              ))}
-            </select>
-            {errors.productId ? (
-              <p className="mt-2 text-rose-600">{errors.productId.message}</p>
+          <div className="min-h-0 flex-1 space-y-5 overflow-y-auto overscroll-contain px-4 py-4 sm:px-6 sm:py-5">
+            <label className="block text-sm text-slate-600">
+              Produk*
+              <select
+                {...register('productId', { valueAsNumber: true })}
+                className="mt-2 w-full rounded-2xl border border-slate-200 bg-slate-50 px-3 py-3 text-sm outline-none sm:px-4 sm:text-base"
+              >
+                <option value={0}>Pilih produk aktif</option>
+                {activeProducts.map((product) => (
+                  <option key={product.id} value={product.id}>
+                    {product.name} — stok: {product.stock}
+                  </option>
+                ))}
+              </select>
+              <p className="mt-2 text-xs text-slate-500">Hanya menampilkan produk aktif.</p>
+              {errors.productId ? (
+                <p className="mt-2 text-rose-600">{errors.productId.message}</p>
+              ) : null}
+            </label>
+
+            <div className="block text-sm text-slate-600">
+              <span>Tipe perubahan*</span>
+              <div className="mt-2 grid grid-cols-1 gap-2 min-[420px]:grid-cols-2">
+                <button
+                  type="button"
+                  onPointerDown={(event) => event.preventDefault()}
+                  onClick={() => setValue('type', 'in', { shouldDirty: true, shouldValidate: true })}
+                  className={`rounded-2xl border px-3 py-3 text-left text-sm font-semibold transition sm:px-4 ${
+                    adjustmentType === 'in'
+                      ? 'border-emerald-600 bg-emerald-50 text-emerald-800'
+                      : 'border-slate-200 bg-slate-50 text-slate-700'
+                  }`}
+                >
+                  Stok Masuk
+                  <span className="mt-1 block text-xs font-normal leading-snug opacity-80">
+                    Restock / supplier
+                  </span>
+                </button>
+                <button
+                  type="button"
+                  onPointerDown={(event) => event.preventDefault()}
+                  onClick={() =>
+                    setValue('type', 'adjustment', { shouldDirty: true, shouldValidate: true })
+                  }
+                  className={`rounded-2xl border px-3 py-3 text-left text-sm font-semibold transition sm:px-4 ${
+                    adjustmentType === 'adjustment'
+                      ? 'border-amber-600 bg-amber-50 text-amber-900'
+                      : 'border-slate-200 bg-slate-50 text-slate-700'
+                  }`}
+                >
+                  Penyesuaian
+                  <span className="mt-1 block text-xs font-normal leading-snug opacity-80">
+                    Koreksi stok
+                  </span>
+                </button>
+              </div>
+            </div>
+
+            {adjustmentType === 'adjustment' ? (
+              <div className="block text-sm text-slate-600">
+                <span>Arah penyesuaian*</span>
+                <div className="mt-2 grid grid-cols-1 gap-2 min-[420px]:grid-cols-2">
+                  <button
+                    type="button"
+                    onPointerDown={(event) => event.preventDefault()}
+                    onClick={() =>
+                      setValue('direction', 'add', { shouldDirty: true, shouldValidate: true })
+                    }
+                    className={`rounded-2xl border px-3 py-3 text-sm font-semibold transition sm:px-4 ${
+                      direction === 'add'
+                        ? 'border-emerald-600 bg-emerald-50 text-emerald-800'
+                        : 'border-slate-200 bg-slate-50 text-slate-700'
+                    }`}
+                  >
+                    Tambah stok
+                  </button>
+                  <button
+                    type="button"
+                    onPointerDown={(event) => event.preventDefault()}
+                    onClick={() =>
+                      setValue('direction', 'reduce', { shouldDirty: true, shouldValidate: true })
+                    }
+                    disabled={!hasSelectedProduct || maxReduceQty === 0}
+                    className={`rounded-2xl border px-3 py-3 text-sm font-semibold transition disabled:cursor-not-allowed disabled:opacity-40 sm:px-4 ${
+                      direction === 'reduce'
+                        ? 'border-rose-600 bg-rose-50 text-rose-800'
+                        : 'border-slate-200 bg-slate-50 text-slate-700'
+                    }`}
+                  >
+                    Kurangi stok
+                  </button>
+                </div>
+                {!hasSelectedProduct ? (
+                  <p className="mt-2 text-xs text-slate-500">Pilih produk terlebih dahulu.</p>
+                ) : maxReduceQty === 0 ? (
+                  <p className="mt-2 text-xs text-rose-600">
+                    Stok produk ini sudah 0, tidak bisa dikurangi.
+                  </p>
+                ) : direction === 'reduce' ? (
+                  <p className="mt-2 text-xs text-slate-500">
+                    Maksimal pengurangan: {maxReduceQty} unit.
+                  </p>
+                ) : null}
+              </div>
             ) : null}
-          </label>
 
-          <label className="block text-sm text-slate-600">
-            Tipe*
-            <select
-              {...register('type')}
-              className="mt-2 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 outline-none"
-            >
-              <option value="in">Stok Masuk</option>
-              <option value="adjustment">Adjustment</option>
-            </select>
-          </label>
+            <div className="block text-sm text-slate-600">
+              <span>
+                {adjustmentType === 'in'
+                  ? 'Jumlah stok masuk*'
+                  : direction === 'add'
+                    ? 'Jumlah penambahan*'
+                    : 'Jumlah pengurangan*'}
+              </span>
+              <div className="mt-2">
+                <PositiveQuantityInput
+                  value={Number.isFinite(quantity) ? quantity : 1}
+                  onChange={(next) =>
+                    setValue('quantity', next, { shouldDirty: true, shouldValidate: true })
+                  }
+                  min={1}
+                  max={quantityMax}
+                  unit="unit"
+                  ariaLabel="Jumlah stok"
+                />
+              </div>
+              <p className="mt-2 text-xs leading-relaxed text-slate-500">
+                Pilih jumlah cepat, ketik langsung, atau tekan tombol plus untuk menambah 1.
+              </p>
+              {selectedProduct && projectedStock !== null ? (
+                <p
+                  className={`mt-2 rounded-2xl px-3 py-2.5 text-xs font-medium leading-relaxed ${
+                    projectedStock < 0
+                      ? 'bg-rose-50 text-rose-700'
+                      : 'bg-slate-100 text-slate-700'
+                  }`}
+                >
+                  <span className="block sm:inline">
+                    Stok saat ini: <strong>{selectedProduct.stock}</strong>
+                  </span>
+                  <span className="hidden sm:inline"> → </span>
+                  <span className="block sm:inline">
+                    Setelah perubahan: <strong>{Math.max(0, projectedStock)}</strong>
+                  </span>
+                  {projectedStock < 0 ? (
+                    <span className="mt-1 block text-rose-600">Melebihi stok tersedia</span>
+                  ) : null}
+                </p>
+              ) : null}
+              {errors.quantity ? (
+                <p className="mt-2 text-rose-600">{errors.quantity.message}</p>
+              ) : null}
+            </div>
 
-          <label className="block text-sm text-slate-600">
-            Qty Change*
-            <input
-              type="number"
-              {...register('qtyChange')}
-              className="mt-2 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 outline-none"
-            />
-            <p className="mt-2 text-xs text-slate-500">
-              {adjustmentType === 'in'
-                ? 'Gunakan angka positif untuk stok masuk.'
-                : 'Gunakan angka positif atau negatif untuk adjustment.'}
-            </p>
-            {errors.qtyChange ? (
-              <p className="mt-2 text-rose-600">{errors.qtyChange.message}</p>
-            ) : null}
-          </label>
+            <label className="block text-sm text-slate-600">
+              Alasan*
+              <textarea
+                rows={4}
+                {...register('reason')}
+                className="mt-2 w-full resize-none rounded-2xl border border-slate-200 bg-slate-50 px-3 py-3 text-sm outline-none sm:px-4 sm:text-base"
+              />
+              {errors.reason ? (
+                <p className="mt-2 text-rose-600">{errors.reason.message}</p>
+              ) : null}
+            </label>
+          </div>
 
-          <label className="block text-sm text-slate-600 sm:col-span-2">
-            Alasan*
-            <textarea
-              rows={4}
-              {...register('reason')}
-              className="mt-2 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 outline-none"
-            />
-            {errors.reason ? (
-              <p className="mt-2 text-rose-600">{errors.reason.message}</p>
-            ) : null}
-          </label>
-
-          <div className="sticky bottom-0 -mx-4 flex flex-col gap-3 border-t border-slate-200 bg-white px-4 pt-4 sm:static sm:mx-0 sm:col-span-2 sm:flex-row sm:px-0">
+          <div className="flex shrink-0 flex-col gap-2 border-t border-slate-200 bg-white px-4 py-3 pb-[calc(env(safe-area-inset-bottom)+0.75rem)] sm:flex-row sm:gap-3 sm:px-6 sm:py-4">
             <button
               type="button"
               onClick={onClose}
-              className="flex-1 rounded-2xl border border-slate-200 px-4 py-3 text-sm font-semibold text-slate-700"
+              className="order-2 flex-1 rounded-2xl border border-slate-200 px-4 py-3 text-sm font-semibold text-slate-700 sm:order-1"
             >
               Batal
             </button>
             <button
-              type="submit"
+              type="button"
               disabled={isSubmitting}
-              className="flex-1 rounded-2xl bg-slate-950 px-4 py-3 text-sm font-semibold text-white disabled:opacity-60"
+              onPointerDown={(event) => event.preventDefault()}
+              onClick={handleFormSubmit}
+              className="order-1 flex-1 rounded-2xl bg-slate-950 px-4 py-3 text-sm font-semibold text-white disabled:opacity-60 sm:order-2"
             >
-              {isSubmitting ? 'Menyimpan...' : 'Simpan Adjustment'}
+              {isSubmitting ? 'Menyimpan...' : 'Simpan Penyesuaian'}
             </button>
           </div>
         </form>
@@ -231,7 +431,6 @@ const AdjustmentModal = ({
 };
 
 export default function DashboardStokPage() {
-  const { user } = useAuthStore();
   const queryClient = useQueryClient();
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState('');
@@ -243,17 +442,19 @@ export default function DashboardStokPage() {
   const debouncedSearch = useDebouncedValue(search, 300);
 
   const productsQuery = useQuery({
-    queryKey: ['stock-products'],
+    queryKey: ['stock-products', 'active'],
     queryFn: async () => {
       const { data } = await api.get<ProductListResponse>('/products', {
         params: {
-          isActive: true,
+          isActive: 'true',
           limit: 100
         }
       });
-      return data.data;
+      return data.data.filter((product) => product.isActive);
     }
   });
+
+  const activeProducts = productsQuery.data || [];
 
   const stockAlertQuery = useQuery({
     queryKey: ['stock-alert'],
@@ -288,16 +489,16 @@ export default function DashboardStokPage() {
 
   const adjustmentMutation = useMutation({
     mutationFn: async (values: AdjustmentFormValues) => {
-      const { data } = await api.post('/stock/adjustment', values);
+      const { data } = await api.post('/stock/adjustment', toAdjustmentPayload(values));
       return data;
     },
     onSuccess: async () => {
-      toast.success('Adjustment stok berhasil');
-      setIsAdjustmentOpen(false);
+      toast.success('Penyesuaian stok berhasil');
       await queryClient.invalidateQueries({ queryKey: ['stock-alert'] });
       await queryClient.invalidateQueries({ queryKey: ['stock-logs'] });
       await queryClient.invalidateQueries({ queryKey: ['stock-products'] });
       await queryClient.invalidateQueries({ queryKey: ['products'] });
+      window.setTimeout(() => setIsAdjustmentOpen(false), 120);
     },
     onError: (error) => {
       toast.error(getErrorMessage(error, 'Gagal menyesuaikan stok'));
@@ -323,10 +524,9 @@ export default function DashboardStokPage() {
   }, [debouncedSearch, stockAlertQuery.data]);
 
   const logRows = stockLogsQuery.data?.data || [];
-  const isManagerView = user?.role === 'manager';
 
   return (
-    <AuthGuard allowedRoles={['admin', 'manager']}>
+    <AuthGuard allowedRoles={['admin']}>
       <DashboardLayout>
         <div className="space-y-6">
           <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
@@ -357,29 +557,25 @@ export default function DashboardStokPage() {
           </section>
 
           <section className="rounded-[28px] border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
-            <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+            <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-end">
               <div>
                 <p className="text-xs uppercase tracking-[0.35em] text-amber-600">Stok</p>
                 <h1 className="mt-2 text-2xl font-semibold text-slate-900">
-                  {isManagerView ? 'Monitoring stok' : 'Monitoring dan adjustment stok'}
+                  Monitoring dan adjustment stok
                 </h1>
                 <p className="mt-2 text-sm text-slate-500">
-                  {isManagerView
-                    ? 'Pantau stok kritis dan histori perubahan stok produk dalam mode baca.'
-                    : 'Pantau stok kritis dan histori perubahan stok produk.'}
+                  Pantau stok kritis dan histori perubahan stok produk.
                 </p>
               </div>
 
-              {!isManagerView ? (
-                <button
-                  type="button"
-                  onClick={() => setIsAdjustmentOpen(true)}
-                  className="inline-flex items-center justify-center gap-2 rounded-2xl bg-slate-950 px-5 py-3 text-sm font-semibold text-white"
-                >
-                  <Plus className="h-4 w-4" />
-                  Adjustment Stok
-                </button>
-              ) : null}
+              <button
+                type="button"
+                onClick={() => setIsAdjustmentOpen(true)}
+                className="inline-flex items-center justify-center gap-2 rounded-2xl bg-slate-950 px-5 py-3 text-sm font-semibold text-white"
+              >
+                <Plus className="h-4 w-4" />
+                Penyesuaian Stok
+              </button>
             </div>
           </section>
 
@@ -404,8 +600,8 @@ export default function DashboardStokPage() {
             </div>
 
             <div className="overflow-hidden rounded-[24px] border border-slate-200">
-              {/* Mobile card view */}
-              <div className="md:hidden divide-y divide-slate-200">
+              {/* Mobile & tablet card view */}
+              <div className="lg:hidden divide-y divide-slate-200">
                 {stockAlertQuery.isLoading
                   ? Array.from({ length: 5 }).map((_, index) => (
                       <div key={index} className="px-4 py-4">
@@ -415,7 +611,7 @@ export default function DashboardStokPage() {
                   : filteredAlerts.map((item) => (
                       <div key={item.id} className="flex items-center justify-between px-4 py-4 text-sm">
                         <div className="min-w-0">
-                          <p className="font-medium text-slate-900 truncate">{item.name}</p>
+                          <p className="line-clamp-2 font-medium text-slate-900">{item.name}</p>
                           <p className="mt-0.5 text-xs text-slate-500">
                             {item.category?.name || '-'} · {formatCurrency(item.price)}
                           </p>
@@ -437,7 +633,7 @@ export default function DashboardStokPage() {
                     ))}
               </div>
               {/* Desktop table view */}
-              <div className="hidden md:block overflow-x-auto">
+              <div className="hidden lg:block overflow-x-auto">
                 <table className="min-w-full divide-y divide-slate-200 text-sm">
                   <thead className="bg-slate-50 text-left text-slate-500">
                     <tr>
@@ -491,7 +687,7 @@ export default function DashboardStokPage() {
           </section>
 
           <section className="rounded-[28px] border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
-            <div className="mb-5 flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+            <div className="mb-5 grid gap-4 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-end">
               <div>
                 <p className="text-xs uppercase tracking-[0.35em] text-amber-600">Log</p>
                 <h2 className="mt-2 text-xl font-semibold text-slate-900">
@@ -499,7 +695,7 @@ export default function DashboardStokPage() {
                 </h2>
               </div>
 
-              <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+              <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
                 <input
                   type="date"
                   value={draftRange.startDate}
@@ -507,6 +703,7 @@ export default function DashboardStokPage() {
                     setDraftRange((current) => ({ ...current, startDate: event.target.value }))
                   }
                   className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 outline-none"
+                  aria-label="Tanggal mulai"
                 />
                 <input
                   type="date"
@@ -515,6 +712,7 @@ export default function DashboardStokPage() {
                     setDraftRange((current) => ({ ...current, endDate: event.target.value }))
                   }
                   className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 outline-none"
+                  aria-label="Tanggal akhir"
                 />
                 <select
                   value={selectedType}
@@ -528,40 +726,44 @@ export default function DashboardStokPage() {
                   <option value="all">Semua tipe</option>
                   <option value="in">Masuk</option>
                   <option value="out">Keluar</option>
-                  <option value="adjustment">Adjustment</option>
+                  <option value="adjustment">Penyesuaian</option>
+                </select>
+                <select
+                  value={selectedProductId}
+                  onChange={(event) =>
+                    setSelectedProductId(
+                      event.target.value === 'all' ? 'all' : Number(event.target.value)
+                    )
+                  }
+                  className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 outline-none"
+                >
+                  <option value="all">Semua produk aktif</option>
+                  {activeProducts.map((product) => (
+                    <option key={product.id} value={product.id}>
+                      {product.name}
+                    </option>
+                  ))}
                 </select>
                 <button
                   type="button"
-                  onClick={() => setRange({ ...draftRange })}
-                  className="rounded-2xl bg-slate-950 px-4 py-3 text-sm font-semibold text-white"
+                  onClick={() => {
+                    const error = getDateRangeError(draftRange.startDate, draftRange.endDate);
+                    if (error) {
+                      toast.error(error);
+                      return;
+                    }
+                    setRange({ ...draftRange });
+                  }}
+                  className="rounded-2xl bg-slate-950 px-4 py-3 text-sm font-semibold text-white sm:col-span-2 xl:col-span-1"
                 >
-                  Apply
+                  Terapkan
                 </button>
               </div>
             </div>
 
-            <div className="mb-5 max-w-sm">
-              <select
-                value={selectedProductId}
-                onChange={(event) =>
-                  setSelectedProductId(
-                    event.target.value === 'all' ? 'all' : Number(event.target.value)
-                  )
-                }
-                className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 outline-none"
-              >
-                <option value="all">Semua produk</option>
-                {productsQuery.data?.map((product) => (
-                  <option key={product.id} value={product.id}>
-                    {product.name}
-                  </option>
-                ))}
-              </select>
-            </div>
-
             <div className="overflow-hidden rounded-[24px] border border-slate-200">
-              {/* Mobile card view */}
-              <div className="md:hidden divide-y divide-slate-200">
+              {/* Mobile & tablet card view */}
+              <div className="lg:hidden divide-y divide-slate-200">
                 {stockLogsQuery.isLoading
                   ? Array.from({ length: 6 }).map((_, index) => (
                       <div key={index} className="px-4 py-4">
@@ -596,7 +798,7 @@ export default function DashboardStokPage() {
                                     : 'bg-amber-100 text-amber-700'
                               }`}
                             >
-                              {item.type}
+                              {getLogTypeLabel(item.type)}
                             </span>
                           </div>
                         </div>
@@ -604,7 +806,7 @@ export default function DashboardStokPage() {
                     ))}
               </div>
               {/* Desktop table view */}
-              <div className="hidden md:block overflow-x-auto">
+              <div className="hidden lg:block overflow-x-auto">
                 <table className="min-w-full divide-y divide-slate-200 text-sm">
                   <thead className="bg-slate-50 text-left text-slate-500">
                     <tr>
@@ -648,7 +850,7 @@ export default function DashboardStokPage() {
                                       : 'bg-amber-100 text-amber-700'
                                 }`}
                               >
-                                {item.type}
+                                {getLogTypeLabel(item.type)}
                               </span>
                             </td>
                             <td className="px-4 py-4 text-slate-600">{item.qtyBefore}</td>
@@ -691,17 +893,15 @@ export default function DashboardStokPage() {
           </section>
         </div>
 
-        {!isManagerView ? (
-          <AdjustmentModal
-            isOpen={isAdjustmentOpen}
-            products={productsQuery.data || []}
-            isSubmitting={adjustmentMutation.isPending}
-            onClose={() => setIsAdjustmentOpen(false)}
-            onSubmit={async (values) => {
-              await adjustmentMutation.mutateAsync(values);
-            }}
-          />
-        ) : null}
+        <AdjustmentModal
+          isOpen={isAdjustmentOpen}
+          products={activeProducts}
+          isSubmitting={adjustmentMutation.isPending}
+          onClose={() => setIsAdjustmentOpen(false)}
+          onSubmit={async (values) => {
+            await adjustmentMutation.mutateAsync(values);
+          }}
+        />
       </DashboardLayout>
     </AuthGuard>
   );

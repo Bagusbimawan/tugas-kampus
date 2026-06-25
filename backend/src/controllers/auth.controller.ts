@@ -6,7 +6,7 @@ import { validateLoginPayload } from '../validations/auth.validation';
 export const authController = {
   async login(req: Request, res: Response) {
     const payload = validateLoginPayload(req.body);
-    const result = await authService.login(payload);
+    const result = await authService.login(payload, req);
     res.status(200).json(result);
   },
 

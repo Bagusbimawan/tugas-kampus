@@ -32,11 +32,12 @@ const productSchema = Joi.object<ProductInput>({
     'string.empty': 'Nama produk wajib diisi'
   }),
   sku: Joi.string().trim().allow('', null).optional(),
-  price: Joi.number().positive().required().messages({
+  price: Joi.number().positive().max(99_999_999).required().messages({
     'any.required': 'Harga jual wajib diisi',
-    'number.positive': 'Harga jual harus lebih besar dari 0'
+    'number.positive': 'Harga jual harus lebih besar dari 0',
+    'number.max': 'Harga jual maksimal Rp 99.999.999'
   }),
-  costPrice: Joi.number().min(0).allow(null).optional(),
+  costPrice: Joi.number().min(0).max(99_999_999).allow(null).optional(),
   stock: Joi.number().integer().min(0).required().messages({
     'any.required': 'Stok wajib diisi',
     'number.min': 'Stok tidak boleh negatif'
@@ -44,7 +45,21 @@ const productSchema = Joi.object<ProductInput>({
   minStock: Joi.number().integer().min(0).default(5),
   unit: Joi.string().trim().default('pcs'),
   imageUrl: Joi.string().uri().allow('', null).optional(),
-  isActive: Joi.boolean().default(true)
+  isActive: Joi.boolean().optional()
+}).custom((value, helpers) => {
+  const costPrice = value.costPrice;
+
+  if (
+    costPrice != null &&
+    Number(costPrice) > 0 &&
+    Number(value.price) < Number(costPrice)
+  ) {
+    return helpers.error('any.custom', {
+      message: 'Harga jual tidak boleh lebih rendah dari harga modal'
+    });
+  }
+
+  return value;
 });
 
 const productQuerySchema = Joi.object<ProductQueryInput>({
@@ -65,7 +80,10 @@ export const validateProductPayload = (payload: ProductInput): ProductInput => {
     throw new ApiError(400, error.details[0]?.message || 'Data produk tidak valid');
   }
 
-  return value;
+  return {
+    ...value,
+    isActive: value.isActive ?? true
+  };
 };
 
 export const validateProductQuery = (

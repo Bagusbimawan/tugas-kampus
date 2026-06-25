@@ -19,6 +19,7 @@ import { AuthGuard } from '../../components/AuthGuard';
 import { SummaryCard } from '../../components/dashboard/SummaryCard';
 import { DashboardLayout } from '../../components/layouts/DashboardLayout';
 import { formatCurrency } from '../../lib/format';
+import { getDateRangeError } from '../../lib/validation';
 import { api } from '../../services/api';
 import { Product } from '../../types/product';
 import {
@@ -180,11 +181,11 @@ export default function DashboardLaporanPage() {
   }, [salesSummaryQuery.data?.dailyData]);
 
   return (
-    <AuthGuard allowedRoles={['admin', 'manager']}>
+    <AuthGuard allowedRoles={['admin']}>
       <DashboardLayout>
         <div className="space-y-6">
           <section className="rounded-[28px] border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
-            <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+            <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-end">
               <div>
                 <p className="text-xs uppercase tracking-[0.35em] text-amber-600">Laporan</p>
                 <h1 className="mt-2 text-2xl font-semibold text-slate-900">
@@ -214,10 +215,17 @@ export default function DashboardLaporanPage() {
                 />
                 <button
                   type="button"
-                  onClick={() => setRange({ ...draftRange })}
+                  onClick={() => {
+                    const error = getDateRangeError(draftRange.startDate, draftRange.endDate);
+                    if (error) {
+                      toast.error(error);
+                      return;
+                    }
+                    setRange({ ...draftRange });
+                  }}
                   className="rounded-2xl bg-slate-950 px-5 py-3 text-sm font-semibold text-white"
                 >
-                  Apply
+                  Terapkan
                 </button>
                 <button
                   type="button"

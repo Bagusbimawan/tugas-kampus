@@ -1,6 +1,7 @@
 import Joi from 'joi';
 
 import { ApiError } from '../utils/api-error';
+import { assertValidDateRange } from '../utils/validate-date-range';
 
 type PaymentMethod = 'cash' | 'qris' | 'transfer' | 'card';
 
@@ -97,6 +98,8 @@ export const validateTransactionQuery = (
   if (error) {
     throw new ApiError(400, error.details[0]?.message || 'Query transaksi tidak valid');
   }
+
+  assertValidDateRange(value.startDate, value.endDate);
 
   return value;
 };

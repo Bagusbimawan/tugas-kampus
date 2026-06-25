@@ -13,7 +13,7 @@ import { DashboardLayout } from '../../components/layouts/DashboardLayout';
 import { getRoleLabel } from '../../lib/role';
 import { api } from '../../services/api';
 
-type UserRole = 'admin' | 'manager' | 'kasir';
+type UserRole = 'admin' | 'kasir';
 
 interface ManagedUser {
   id: number;
@@ -25,19 +25,41 @@ interface ManagedUser {
   updatedAt: string;
 }
 
-const userSchema = z.object({
-  name: z.string().min(1, 'Nama wajib diisi'),
-  email: z.string().email('Email tidak valid'),
-  password: z.string().min(6, 'Password minimal 6 karakter').optional(),
-  role: z.enum(['admin', 'manager', 'kasir']),
-  isActive: z.boolean()
-});
+const createUserSchema = (isEdit: boolean) =>
+  z
+    .object({
+      name: z.string().trim().min(1, 'Nama wajib diisi'),
+      email: z.string().trim().email('Email tidak valid'),
+      password: z.string().optional(),
+      role: z.enum(['admin', 'kasir']),
+      isActive: z.boolean()
+    })
+    .superRefine((values, context) => {
+      const password = values.password?.trim() ?? '';
+
+      if (!isEdit && password.length < 6) {
+        context.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: 'Password wajib diisi (minimal 6 karakter)',
+          path: ['password']
+        });
+      }
+
+      if (isEdit && password.length > 0 && password.length < 6) {
+        context.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: 'Password minimal 6 karakter',
+          path: ['password']
+        });
+      }
+    });
+
+type UserFormValues = z.infer<ReturnType<typeof createUserSchema>>;
 
 const passwordSchema = z.object({
-  password: z.string().min(6, 'Password minimal 6 karakter')
+  password: z.string().trim().min(6, 'Password minimal 6 karakter')
 });
 
-type UserFormValues = z.infer<typeof userSchema>;
 type PasswordFormValues = z.infer<typeof passwordSchema>;
 
 const emptyUserValues: UserFormValues = {
@@ -77,8 +99,9 @@ const UserFormModal = ({
     handleSubmit,
     formState: { errors }
   } = useForm<UserFormValues>({
-    resolver: zodResolver(userSchema),
-    defaultValues: emptyUserValues
+    resolver: zodResolver(createUserSchema(Boolean(initialUser))),
+    defaultValues: emptyUserValues,
+    mode: 'onChange'
   });
 
   useEffect(() => {
@@ -127,6 +150,7 @@ const UserFormModal = ({
         </div>
 
         <form
+          key={initialUser?.id ?? 'new-user'}
           onSubmit={handleSubmit(onSubmit)}
           className="grid gap-4 p-4 pb-[calc(env(safe-area-inset-bottom)+1rem)] sm:grid-cols-2 sm:p-6"
         >
@@ -167,7 +191,6 @@ const UserFormModal = ({
               className="mt-2 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 outline-none"
             >
               <option value="admin">Admin</option>
-              <option value="manager">Manager</option>
               <option value="kasir">Kasir</option>
             </select>
           </label>

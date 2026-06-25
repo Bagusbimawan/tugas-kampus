@@ -54,5 +54,6 @@ module.exports = {
   Transaction: db.Transaction,
   TransactionItem: db.TransactionItem,
   Payment: db.Payment,
-  StockLog: db.StockLog
+  StockLog: db.StockLog,
+  StoreSetting: db.StoreSetting
 };

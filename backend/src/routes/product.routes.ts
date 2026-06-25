@@ -15,7 +15,7 @@ router.get('/:id', asyncHandler(productController.getById));
 router.post('/', roleMiddleware(['admin']), asyncHandler(productController.create));
 router.post(
   '/:id/image',
-  roleMiddleware(['admin', 'manager']),
+  roleMiddleware(['admin']),
   productImageUploadMiddleware,
   asyncHandler(productController.uploadImage)
 );

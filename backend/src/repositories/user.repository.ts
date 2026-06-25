@@ -30,6 +30,19 @@ export const userRepository = {
     return User.findOne({ where });
   },
 
+  countActiveAdmins(excludedId?: number) {
+    const where: Record<string, unknown> = {
+      role: 'admin',
+      isActive: true
+    };
+
+    if (excludedId) {
+      where.id = { [Op.ne]: excludedId };
+    }
+
+    return User.count({ where });
+  },
+
   create(payload: Record<string, unknown>) {
     return User.create(payload);
   },

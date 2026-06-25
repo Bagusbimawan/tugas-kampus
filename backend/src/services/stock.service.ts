@@ -59,6 +59,10 @@ export const stockService = {
           throw new Error('Produk tidak ditemukan');
         }
 
+        if (!product.isActive) {
+          throw new Error('Produk nonaktif tidak bisa disesuaikan stoknya');
+        }
+
         const qtyBefore = product.stock;
         const qtyChange = payload.qtyChange;
 

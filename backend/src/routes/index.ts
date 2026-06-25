@@ -4,6 +4,7 @@ import authRoutes from './auth.routes';
 import categoryRoutes from './category.routes';
 import productRoutes from './product.routes';
 import reportRoutes from './report.routes';
+import settingsRoutes from './settings.routes';
 import stockRoutes from './stock.routes';
 import transactionRoutes from './transaction.routes';
 import userRoutes from './user.routes';
@@ -16,6 +17,7 @@ router.use('/products', productRoutes);
 router.use('/stock', stockRoutes);
 router.use('/transactions', transactionRoutes);
 router.use('/reports', reportRoutes);
+router.use('/settings', settingsRoutes);
 router.use('/users', userRoutes);
 
 export default router;

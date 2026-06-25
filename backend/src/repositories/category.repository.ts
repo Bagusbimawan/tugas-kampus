@@ -1,3 +1,5 @@
+import { Op, Sequelize } from 'sequelize';
+
 const { Category, Product } = require('../../models');
 
 export const categoryRepository = {
@@ -9,6 +11,23 @@ export const categoryRepository = {
 
   findById(id: number) {
     return Category.findByPk(id);
+  },
+
+  findByName(name: string, excludedId?: number) {
+    const normalizedName = name.trim().toLowerCase();
+    const conditions: unknown[] = [
+      Sequelize.where(Sequelize.fn('LOWER', Sequelize.col('name')), normalizedName)
+    ];
+
+    if (excludedId) {
+      conditions.push({ id: { [Op.ne]: excludedId } });
+    }
+
+    return Category.findOne({
+      where: {
+        [Op.and]: conditions
+      }
+    });
   },
 
   create(payload: { name: string; description?: string }) {

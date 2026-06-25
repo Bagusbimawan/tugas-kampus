@@ -26,6 +26,15 @@ const ensureCategoryExists = async (categoryId: number) => {
   }
 };
 
+const ensureUniqueName = async (name: string, excludedId?: number) => {
+  const existingProduct = await productRepository.findByName(name, excludedId);
+
+  if (existingProduct) {
+    const statusLabel = existingProduct.isActive ? 'aktif' : 'nonaktif';
+    throw new ApiError(400, `Nama produk sudah digunakan oleh produk ${statusLabel}`);
+  }
+};
+
 const ensureUniqueSku = async (sku?: string | null, excludedId?: number) => {
   const normalizedSku = normalizeSku(sku);
 
@@ -74,6 +83,7 @@ export const productService = {
 
   async create(payload: ProductInput, userId: number) {
     await ensureCategoryExists(payload.categoryId);
+    await ensureUniqueName(payload.name);
     const sku = await ensureUniqueSku(payload.sku);
 
     return stockRepository.sequelize.transaction(async (transaction: Transaction) => {
@@ -112,6 +122,7 @@ export const productService = {
     }
 
     await ensureCategoryExists(payload.categoryId);
+    await ensureUniqueName(payload.name, id);
     const sku = await ensureUniqueSku(payload.sku, id);
 
     return stockRepository.sequelize.transaction(async (transaction: Transaction) => {
@@ -122,33 +133,16 @@ export const productService = {
       }
 
       const qtyBefore = currentProduct.stock;
-      const qtyAfter = payload.stock;
-      const qtyChange = qtyAfter - qtyBefore;
 
       await productRepository.update(
         currentProduct,
         {
           ...payload,
-          sku
+          sku,
+          stock: qtyBefore
         },
         transaction
       );
-
-      if (qtyChange !== 0) {
-        await stockRepository.createLog(
-          {
-            productId: id,
-            userId,
-            type: qtyChange > 0 ? 'in' : 'out',
-            qtyBefore,
-            qtyChange,
-            qtyAfter,
-            reason:
-              qtyChange > 0 ? 'Restock dari update produk' : 'Pengurangan stok dari update produk'
-          },
-          transaction
-        );
-      }
 
       return productRepository.findById(id, { transaction });
     });
